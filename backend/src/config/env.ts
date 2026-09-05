@@ -5,7 +5,7 @@ export const env = {
     PORT: process.env.PORT! || 5000,
     NODE_ENV: process.env.NODE_ENV! || 'development',
 
-    // DATABASE_URL: process.env.DATABASE_URL!
+    DATABASE_URL: process.env.DATABASE_URL!,
 
     CUSTOMER_URL: process.env.CUSTOMER_URL!,
     ADMIN_URL: process.env.ADMIN_URL!,
