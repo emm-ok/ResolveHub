@@ -2,7 +2,7 @@ import React from 'react'
 
 const MainPage = () => {
   return (
-    <div>MainPage</div>
+    <div className="text-2xl font-bold">MainPage</div>
   )
 }
 
