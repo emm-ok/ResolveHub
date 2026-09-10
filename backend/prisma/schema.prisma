@@ -10,3 +10,70 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Role {
+  USER
+  AGENT
+  ADMIN
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum Provider {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  GITHUB
+}
+
+model User {
+  id       String  @id @default(uuid())
+  name     String
+  email    String  @unique
+  password String?
+
+  avatar UserImage?
+
+  clerkId String? @unique
+
+  phone   String? @unique
+  address String?
+  city    String?
+  state   String?
+  country String?
+
+  role     Role     @default(USER)
+  status   Status   @default(ACTIVE)
+  provider Provider @default(LOCAL)
+
+  emailVerified                   Boolean   @default(false)
+  emailVerifiedAt                 DateTime?
+  emailVerificationToken          String?
+  emailVerificationTokenExpiresAt DateTime?
+
+  passwordResetToken          String?
+  passwordResetTokenExpiresAt DateTime?
+  passwordChangedAt           DateTime?
+
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserImage {
+  id String @id @default(uuid())
+
+  url      String
+  publicId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
