@@ -5,10 +5,7 @@ import {
   handleClerkWebhook,
 } from "./clerk.webhook.service.js";
 
-export async function clerkWebhook(
-  req: Request,
-  res: Response
-) {
+export async function clerkWebhook(req: Request, res: Response) {
   try {
     const event = await verifyWebhook(req);
 
