@@ -23,7 +23,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(clerkMiddleware())
 
-
 app.use("/api/users", userRoutes);
 
 // app.get("/users", async(req, res) => {
