@@ -26,6 +26,10 @@ export async function handleUserCreated(event: WebhookEvent) {
 
   const user = event.data;
 
+  if (!user.id) {
+    return;
+  }
+
   const email = getPrimaryEmail(
     user.email_addresses,
     user.primary_email_address_id
@@ -40,7 +44,7 @@ export async function handleUserCreated(event: WebhookEvent) {
   const firstName = user.first_name ?? "";
   const lastName = user.last_name ?? "";
 
-  const name = `${firstName} ${lastName}`.trim() ?? null;
+  const name = `${firstName} ${lastName}`.trim();
 
   await prisma.user.upsert({
     where: {
@@ -69,6 +73,10 @@ export async function handleUserUpdated(event: WebhookEvent) {
 
   const user = event.data;
 
+  if (!user.id) {
+    return;
+  }
+
   const email = getPrimaryEmail(
     user.email_addresses,
     user.primary_email_address_id
@@ -84,7 +92,7 @@ export async function handleUserUpdated(event: WebhookEvent) {
   const lastName = user.last_name ?? "";
 
   const name =
-    `${firstName} ${lastName}`.trim() ?? null;
+    `${firstName} ${lastName}`.trim();
 
   await prisma.user.update({
     where: {
