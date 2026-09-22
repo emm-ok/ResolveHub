@@ -1,12 +1,12 @@
-import { UserButton } from '@clerk/nextjs'
-import React from 'react'
+import Navbar from '@/components/layout/Navbar'
 
-const MainPage = () => {
+const HomePage = () => {
   return (
-    <div>MainPage
-      <div><UserButton /></div>
+    <div>
+      <Navbar />
+      <h1 className="my-10">Welcome to the Home Page</h1>
     </div>
   )
 }
 
-export default MainPage
+export default HomePage

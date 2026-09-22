@@ -1,6 +1,6 @@
 "use client";
 
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import { motion, type Variants } from "framer-motion";
 import {
   ArrowRight,
@@ -53,6 +53,7 @@ const itemVariants: Variants = {
 };
 
 export default function AuthPage() {
+  const {isSignedIn, user, isLoaded} = useUser()
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#fafafa] text-neutral-950">
       {/* Ambient background */}
