@@ -23,7 +23,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(clerkMiddleware())
 
-
 app.use("/api/users", userRoutes);
 
 // app.get("/users", async(req, res) => {
@@ -35,9 +34,9 @@ app.use("/api/users", userRoutes);
 //     });
 // })
 
-app.get("/", (req, res) => {
-    res.status(200).json({ message: "Server is running successfully" });
-});
+// app.get("/", (req, res) => {
+//     res.status(200).json({ message: "Server is running successfully" });
+// });
 
 const PORT = env.PORT || 5000;
 
