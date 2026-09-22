@@ -1,10 +1,13 @@
-import Navbar from '@/components/layout/Navbar'
+import { ComplaintToResolution } from '@/components/home/ComplaintToResolution'
+import { HeroSection } from '@/components/home/HeroSection'
+import { Navbar } from '@/components/layout/Navbar'
 
 const HomePage = () => {
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <h1 className="my-10">Welcome to the Home Page</h1>
+      <HeroSection />
+      <ComplaintToResolution />
     </div>
   )
 }
