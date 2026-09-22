@@ -137,7 +137,7 @@ export default function AuthPage() {
 
           <SignInButton
             mode="modal"
-            fallbackRedirectUrl="/dashboard"
+            fallbackRedirectUrl="/"
           >
             <motion.button
               whileHover={{
@@ -206,7 +206,7 @@ export default function AuthPage() {
             >
               <SignUpButton
                 mode="modal"
-                fallbackRedirectUrl="/dashboard"
+                fallbackRedirectUrl="/"
               >
                 <motion.button
                   whileHover={{
