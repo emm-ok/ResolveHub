@@ -41,10 +41,10 @@ export async function handleUserCreated(event: WebhookEvent) {
     );
   }
 
-  const firstName = user.first_name ?? "";
-  const lastName = user.last_name ?? "";
+  const firstName = user.first_name;
+  const lastName = user.last_name;
 
-  const name = `${firstName} ${lastName}`.trim();
+  const name = `${firstName} ${lastName}`.trim() ?? user.username?.toUpperCase() ?? email.split("@")[0]?.toUpperCase();
 
   await prisma.user.upsert({
     where: {
@@ -88,11 +88,10 @@ export async function handleUserUpdated(event: WebhookEvent) {
     );
   }
 
-  const firstName = user.first_name ?? "";
-  const lastName = user.last_name ?? "";
+  const firstName = user.first_name;
+  const lastName = user.last_name;
 
-  const name =
-    `${firstName} ${lastName}`.trim();
+  const name = `${firstName} ${lastName}`.trim() ?? user.username?.toUpperCase() ?? email.split("@")[0]?.toUpperCase();
 
   await prisma.user.update({
     where: {
