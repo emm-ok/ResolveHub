@@ -25,3 +25,5 @@ Object.entries(env).forEach(([key, value]) => {
     }
 })
 
+
+
