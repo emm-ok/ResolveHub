@@ -24,6 +24,3 @@ Object.entries(env).forEach(([key, value]) => {
         console.log("Missing environment variable", key)
     }
 })
-
-
-
