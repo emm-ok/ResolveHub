@@ -60,6 +60,32 @@ enum AuditAction {
   REACTIVATE
   APPROVE
   REJECT
+
+  USER_REGISTERED
+  ORGANIZATION_CREATED
+  MEMBER_INVITED
+  MEMBER_JOINED
+  MEMBER_DEACTIVATED
+
+  CASE_CREATED
+  CASE_ASSIGNED
+  CASE_REASSIGNED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+
+  INVESTIGATION_STARTED
+  INVESTIGATION_UPDATED
+  EVIDENCE_UPLOADED
+  EVIDENCE_ACCESSED
+
+  MESSAGE_SENT
+
+  RESOLUTION_PROPOSED
+  RESOLUTION_ACCEPTED
+  RESOLUTION_REJECTED
+
+  CASE_ESCALATED
+  CASE_CLOSED
 }
 
 enum AuditEntity {
@@ -114,7 +140,7 @@ model User {
   sentInvitations CompanyInvitation[] @relation("InvitationInviter")
 
   auditLogs AuditLog[] @relation("AuditActor")
-  cases     Case[] @relation("CaseCreator")
+  cases     Case[]     @relation("CaseCreator")
 
   @@index([email])
   @@index([clerkId])
