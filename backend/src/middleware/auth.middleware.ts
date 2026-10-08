@@ -5,7 +5,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        id: string;
+        clerkId: string;
       };
     }
   }
@@ -25,7 +25,7 @@ export function requireAuthentication(
     });
   }
 
-  req.user = { id: userId };
+  req.user = { clerkId: userId };
 
   next();
 }

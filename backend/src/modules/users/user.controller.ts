@@ -7,7 +7,7 @@ export async function getUserByClerkId(
     req: Request, res: Response
 ) {
     try {
-        const userId = req.user?.id;
+        const userId = req.user?.clerkId;
 
         if (!userId) {
             return res.status(400).json({

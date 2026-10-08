@@ -3,6 +3,7 @@
 
 body {
   font-family: var(--font-geist), sans-serif;
+  scroll-behavior: smooth;
 }
 /* :root {
   --background: #ffffff;
