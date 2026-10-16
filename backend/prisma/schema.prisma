@@ -37,6 +37,13 @@ enum MembershipStatus {
   REMOVED
 }
 
+enum ClerkRole {
+  OWNER
+  ADMIN
+  STAFF
+  INVESTIGATOR
+}
+
 enum InvitationStatus {
   PENDING
   ACCEPTED
@@ -288,7 +295,7 @@ model CompanyRole {
    * org:staff
    * org:investigator
    */
-  clerkRole String
+  clerkRole ClerkRole
 
   isSystem Boolean @default(false)
 
@@ -296,7 +303,7 @@ model CompanyRole {
 
   company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-  members CompanyMember[]
+  members CompanyMember[] // TODO: Not sure about this field. Will review later
 
   invitations CompanyInvitation[]
 
