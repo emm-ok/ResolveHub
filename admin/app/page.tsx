@@ -1,9 +1,9 @@
 import React from 'react'
 
-const MainPage = () => {
+const AdminPage = () => {
   return (
     <div className="text-2xl font-bold">AdminPage</div>
   )
 }
 
-export default MainPage
+export default AdminPage
