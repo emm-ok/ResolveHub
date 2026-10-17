@@ -6,12 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
-/**
- * =========================================================
- * ENUMS
- * =========================================================
- */
-
+// ENUMS
 enum PlatformRole {
   USER
   ADMIN
@@ -109,12 +104,7 @@ enum AuditEntity {
   SYSTEM
 }
 
-/**
- * =========================================================
- * USER
- * =========================================================
- */
-
+//  USER
 model User {
   id String @id @default(uuid())
 
@@ -155,12 +145,7 @@ model User {
   @@index([platformRole])
 }
 
-/**
- * =========================================================
- * USER IMAGE
- * =========================================================
- */
-
+//  USER IMAGE
 model UserImage {
   id String @id @default(uuid())
 
@@ -175,12 +160,7 @@ model UserImage {
   updatedAt DateTime @updatedAt
 }
 
-/**
- * =========================================================
- * COMPANY
- * =========================================================
- */
-
+// COMPANY
 model Company {
   id String @id @default(uuid())
 
@@ -226,12 +206,7 @@ model Company {
   @@index([status])
 }
 
-/**
- * =========================================================
- * COMPANY MEMBERSHIP
- * =========================================================
- */
-
+//  COMPANY MEMBERSHIP
 model CompanyMember {
   id String @id @default(uuid())
 
@@ -270,12 +245,7 @@ model CompanyMember {
   @@index([status])
 }
 
-/**
- * =========================================================
- * COMPANY ROLES
- * =========================================================
- */
-
+//  COMPANY ROLES
 model CompanyRole {
   id String @id @default(uuid())
 
@@ -312,11 +282,7 @@ model CompanyRole {
   @@index([companyId])
 }
 
-/**
- * =========================================================
- * PERMISSIONS
- * =========================================================
- */
+//  PERMISSIONS
 
 model Permission {
   id String @id @default(uuid())
@@ -337,12 +303,7 @@ model Permission {
   updatedAt DateTime @updatedAt
 }
 
-/**
- * =========================================================
- * ROLE ↔ PERMISSION
- * =========================================================
- */
-
+//  ROLE - PERMISSION
 model RolePermission {
   roleId       String
   permissionId String
@@ -357,12 +318,7 @@ model RolePermission {
   @@index([permissionId])
 }
 
-/**
- * =========================================================
- * COMPANY INVITATION
- * =========================================================
- */
-
+//  COMPANY INVITATION
 model CompanyInvitation {
   id String @id @default(uuid())
 
@@ -411,12 +367,7 @@ model CompanyInvitation {
   @@index([roleId])
 }
 
-/**
- * =========================================================
- * AUDIT LOG
- * =========================================================
- */
-
+// AUDIT LOG
 model AuditLog {
   id String @id @default(uuid())
 
@@ -454,12 +405,7 @@ model AuditLog {
   @@index([createdAt])
 }
 
-/**
- * =========================================================
- * CASE
- * =========================================================
- */
-
+// CASE
 model Case {
   id String @id @default(uuid())
 
@@ -494,12 +440,7 @@ model Case {
   @@index([assignedToId])
 }
 
-/**
- * =========================================================
- * CASE ASSIGNMENT
- * =========================================================
- */
-
+// CASE ASSIGNMENT
 model CaseAssignment {
   id String @id @default(uuid())
 
