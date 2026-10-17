@@ -281,12 +281,6 @@ model CompanyRole {
 
   companyId String?
 
-  name String
-
-  slug String
-
-  description String?
-
   /**
    * The corresponding Clerk organization role.
    * Example:
@@ -296,6 +290,8 @@ model CompanyRole {
    * org:investigator
    */
   clerkRole ClerkRole
+
+  description String?
 
   isSystem Boolean @default(false)
 
@@ -312,7 +308,6 @@ model CompanyRole {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([companyId, slug])
   @@unique([companyId, clerkRole])
   @@index([companyId])
 }
