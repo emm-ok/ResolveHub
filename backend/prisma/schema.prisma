@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,7 +7,10 @@ datasource db {
   provider = "postgresql"
 }
 
+// -----------------------------------------------------------------------------
 // ENUMS
+// -----------------------------------------------------------------------------
+
 enum PlatformRole {
   USER
   ADMIN
@@ -15,9 +19,8 @@ enum PlatformRole {
 
 enum UserStatus {
   ACTIVE
-  INACTIVE
   SUSPENDED
-  DELETED
+  DEACTIVATED
 }
 
 enum CompanyStatus {
@@ -32,11 +35,11 @@ enum MembershipStatus {
   REMOVED
 }
 
-enum ClerkRole {
-  OWNER
+enum SystemRoleType {
   ADMIN
-  STAFF
+  AGENT
   INVESTIGATOR
+  VIEWER
 }
 
 enum InvitationStatus {
@@ -44,6 +47,152 @@ enum InvitationStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+}
+
+enum PermissionCode {
+  USER_READ
+  USER_UPDATE
+  COMPANY_SETTINGS_READ
+  COMPANY_SETTINGS_UPDATE
+  MEMBER_READ
+  MEMBER_INVITE
+  MEMBER_UPDATE
+  MEMBER_REMOVE
+  ROLE_READ
+  ROLE_MANAGE
+  CASE_REQUEST_READ
+  CASE_REQUEST_REVIEW
+  CASE_CREATE
+  CASE_READ
+  CASE_UPDATE
+  CASE_ASSIGN
+  CASE_ESCALATE
+  CASE_RESOLVE
+  CASE_CLOSE
+  CASE_REOPEN
+  COMMENT_CREATE
+  EVIDENCE_READ
+  EVIDENCE_UPLOAD
+  EVIDENCE_DELETE
+  RESOLUTION_PROPOSE
+  RESOLUTION_DECIDE
+  SLA_MANAGE
+  AUDIT_READ
+}
+
+enum CaseRequestStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  DUPLICATE
+  WITHDRAWN
+}
+
+enum RequestChannel {
+  WEB_FORM
+  EMAIL
+  PHONE
+  CHAT
+  API
+  INTERNAL
+}
+
+enum CaseCategory {
+  BILLING
+  REFUND
+  PRODUCT_ISSUE
+  SERVICE_ISSUE
+  ACCOUNT_ACCESS
+  COMPLAINT
+  INQUIRY
+  OTHER
+}
+
+enum CaseStatus {
+  OPEN
+  TRIAGED
+  IN_PROGRESS
+  WAITING_FOR_CUSTOMER
+  WAITING_FOR_THIRD_PARTY
+  RESOLVED
+  CLOSED
+}
+
+enum CasePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum CaseOrigin {
+  WEB_FORM
+  EMAIL
+  PHONE
+  CHAT
+  API
+  INTERNAL
+}
+
+enum CommentVisibility {
+  INTERNAL
+  REQUESTER_VISIBLE
+}
+
+enum ActivityVisibility {
+  INTERNAL
+  REQUESTER_VISIBLE
+}
+
+enum AttachmentVisibility {
+  INTERNAL
+  REQUESTER_SHARED
+}
+
+enum StorageProvider {
+  S3_COMPATIBLE
+  CLOUDINARY
+  OTHER
+}
+
+enum ResolutionStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum NotificationType {
+  REQUEST_RECEIVED
+  REQUEST_ACCEPTED
+  REQUEST_REJECTED
+  CASE_ASSIGNED
+  CASE_UPDATED
+  NEW_COMMENT
+  RESOLUTION_PROPOSED
+  RESOLUTION_DECIDED
+  SLA_WARNING
+  SLA_BREACH
+  INVITATION
+  SYSTEM
+}
+
+enum CaseActivityType {
+  CASE_CREATED
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+  ASSIGNED
+  UNASSIGNED
+  COMMENT_ADDED
+  EVIDENCE_ADDED
+  RESOLUTION_PROPOSED
+  RESOLUTION_ACCEPTED
+  RESOLUTION_REJECTED
+  ESCALATED
+  REOPENED
+  SLA_BREACHED
+  REQUEST_LINKED
 }
 
 enum AuditAction {
@@ -56,38 +205,27 @@ enum AuditAction {
   INVITATION_ACCEPTED
   INVITATION_REVOKED
   ROLE_CHANGED
-  MEMBER_ADDED
+  MEMBER_SUSPENDED
+  MEMBER_REACTIVATED
   MEMBER_REMOVED
-  SUSPEND
-  REACTIVATE
-  APPROVE
-  REJECT
-
-  USER_REGISTERED
-  ORGANIZATION_CREATED
-  MEMBER_INVITED
-  MEMBER_JOINED
-  MEMBER_DEACTIVATED
-
+  CASE_REQUEST_SUBMITTED
+  CASE_REQUEST_REVIEWED
   CASE_CREATED
   CASE_ASSIGNED
-  CASE_REASSIGNED
-  STATUS_CHANGED
-  PRIORITY_CHANGED
-
-  INVESTIGATION_STARTED
-  INVESTIGATION_UPDATED
-  EVIDENCE_UPLOADED
-  EVIDENCE_ACCESSED
-
-  MESSAGE_SENT
-
-  RESOLUTION_PROPOSED
-  RESOLUTION_ACCEPTED
-  RESOLUTION_REJECTED
-
+  CASE_UNASSIGNED
+  CASE_STATUS_CHANGED
+  CASE_PRIORITY_CHANGED
   CASE_ESCALATED
+  CASE_RESOLVED
   CASE_CLOSED
+  CASE_REOPENED
+  COMMENT_CREATED
+  EVIDENCE_UPLOADED
+  EVIDENCE_DOWNLOADED
+  RESOLUTION_PROPOSED
+  RESOLUTION_DECIDED
+  SLA_BREACHED
+  WEBHOOK_PROCESSED
 }
 
 enum AuditEntity {
@@ -97,363 +235,521 @@ enum AuditEntity {
   INVITATION
   ROLE
   PERMISSION
+  CASE_REQUEST
   CASE
-  SLA
+  CASE_ASSIGNMENT
+  CASE_COMMENT
   EVIDENCE
-  COMMENT
+  RESOLUTION
+  SLA_POLICY
+  NOTIFICATION
+  WEBHOOK_EVENT
   SYSTEM
 }
 
-//  USER
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+// -----------------------------------------------------------------------------
+// IDENTITY AND TENANCY
+// -----------------------------------------------------------------------------
+
 model User {
-  id String @id @default(uuid())
-
-  // Clerk identity
-  clerkId String @unique
-
-  name  String?
-  email String  @unique
-
-  phone String? @unique
-
-  avatar UserImage?
-
-  address String?
-  city    String?
-  state   String?
-  country String?
-
+  id          String       @id @default(uuid()) @db.Uuid
+  // Stable Clerk user ID; do not use the email address as the identity key.
+  clerkId     String       @unique
+  name        String?
+  email       String       @unique
+  phone       String?
+  avatarUrl   String?
   platformRole PlatformRole @default(USER)
-  status       UserStatus   @default(ACTIVE)
-
+  status      UserStatus   @default(ACTIVE)
   lastLoginAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  memberships          CompanyMember[]
+  createdCompanies     Company[]          @relation("CompanyCreator")
+  submittedRequests    CaseRequest[]      @relation("RequestSubmitter")
+  requestedCases       Case[]             @relation("CaseRequester")
+  createdCases         Case[]             @relation("CaseCreator")
+  comments             CaseComment[]      @relation("CommentAuthor")
+  uploadedEvidence     Evidence[]         @relation("EvidenceUploader")
+  caseActivities       CaseActivity[]     @relation("ActivityActor")
+  proposedResolutions  CaseResolution[]   @relation("ResolutionProposer")
+  decidedResolutions   CaseResolution[]   @relation("ResolutionDecider")
+  acceptedInvitations  CompanyInvitation[] @relation("InvitationAcceptor")
+  auditLogs            AuditLog[]         @relation("AuditActor")
+  notifications        Notification[]
+  createdSlaPolicies   SLAPolicy[]        @relation("SLAPolicyCreator")
 
-  memberships CompanyMember[]
-
-  sentInvitations CompanyInvitation[] @relation("InvitationInviter")
-
-  auditLogs AuditLog[] @relation("AuditActor")
-  cases     Case[]     @relation("CaseCreator")
-
-  @@index([email])
-  @@index([clerkId])
   @@index([status])
   @@index([platformRole])
 }
 
-//  USER IMAGE
-model UserImage {
-  id String @id @default(uuid())
-
-  url      String
-  publicId String
-
-  userId String @unique
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// COMPANY
 model Company {
-  id String @id @default(uuid())
+  id                   String        @id @default(uuid()) @db.Uuid
+  // Clerk Organization ID. ResolveHub does not issue Clerk IDs itself.
+  clerkOrganizationId  String        @unique
+  name                 String
+  slug                 String        @unique
+  email                String?
+  phone                String?
+  website              String?
+  logoUrl              String?
+  description          String?
+  address              String?
+  city                 String?
+  state                String?
+  country              String?
+  timezone             String        @default("UTC")
+  publicIntakeEnabled  Boolean       @default(true)
+  status               CompanyStatus @default(ACTIVE)
+  createdByUserId      String?       @db.Uuid
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  deletedAt            DateTime?
 
-  // Corresponding Clerk Organization
-  clerkOrganizationId String @unique
+  createdBy    User?              @relation("CompanyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  memberships  CompanyMember[]
+  roles        CompanyRole[]
+  invitations  CompanyInvitation[]
+  caseRequests CaseRequest[]
+  cases        Case[]
+  evidence     Evidence[]
+  activities   CaseActivity[]
+  slaPolicies  SLAPolicy[]
+  auditLogs    AuditLog[]
+  notifications Notification[]
 
-  name String
-
-  slug String @unique
-
-  email String?
-
-  phone String?
-
-  website String?
-
-  logoUrl String?
-
-  description String?
-
-  address String?
-  city    String?
-  state   String?
-  country String?
-
-  status CompanyStatus @default(ACTIVE)
-
-  memberships CompanyMember[]
-
-  invitations CompanyInvitation[]
-
-  roles CompanyRole[]
-
-  cases Case[]
-
-  auditLogs AuditLog[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
+  @@index([status, createdAt])
   @@index([name])
-  @@index([status])
 }
 
-//  COMPANY MEMBERSHIP
 model CompanyMember {
-  id String @id @default(uuid())
+  id                 String           @id @default(uuid()) @db.Uuid
+  userId             String           @db.Uuid
+  companyId          String           @db.Uuid
+  roleId             String           @db.Uuid
+  // Optional ID from Clerk's organization-membership record for webhook sync.
+  clerkMembershipId  String?          @unique
+  status             MembershipStatus @default(ACTIVE)
+  department         String?
+  jobTitle           String?
+  employeeId         String?
+  joinedAt           DateTime         @default(now())
+  suspendedAt        DateTime?
+  removedAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  userId    String
-  companyId String
-
-  roleId String
-
-  status MembershipStatus @default(ACTIVE)
-
-  department String?
-
-  jobTitle String?
-
-  employeeId String?
-
-  joinedAt    DateTime  @default(now())
-  suspendedAt DateTime?
-  removedAt   DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  role CompanyRole @relation(fields: [roleId], references: [id])
-
-  caseAssignments CaseAssignment[]
+  user             User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  role             CompanyRole        @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  caseAssignments  CaseAssignment[]   @relation("AssignedMember")
+  assignmentsMade  CaseAssignment[]   @relation("AssignmentActor")
+  invitationsSent  CompanyInvitation[] @relation("InvitationInviter")
+  requestsReviewed CaseRequest[]      @relation("RequestReviewer")
 
   @@unique([userId, companyId])
-  @@index([companyId])
-  @@index([userId])
+  // employeeId is optional; uniqueness for non-empty values is enforced by the service layer.
+  @@index([companyId, employeeId])
+  @@index([companyId, status])
+  @@index([userId, status])
   @@index([roleId])
-  @@index([status])
 }
 
-//  COMPANY ROLES
 model CompanyRole {
-  id String @id @default(uuid())
+  id           String          @id @default(uuid()) @db.Uuid
+  companyId    String          @db.Uuid
+  name         String
+  slug         String
+  description  String?
+  // Optional designation for seeded/system roles; null for custom roles.
+  systemRole   SystemRoleType?
+  // Clerk role key can vary by Clerk configuration and custom-role setup.
+  clerkRoleKey String?
+  isDefault    Boolean         @default(false)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
-  companyId String?
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  members      CompanyMember[]
+  invitations  CompanyInvitation[]
+  permissions  RolePermission[]
 
-  /**
-   * The corresponding Clerk organization role.
-   * Example:
-   * org:owner
-   * org:admin
-   * org:staff
-   * org:investigator
-   */
-  clerkRole ClerkRole
-
-  description String?
-
-  isSystem Boolean @default(false)
-
-  isDefault Boolean @default(false)
-
-  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  members CompanyMember[] // TODO: Not sure about this field. Will review later
-
-  invitations CompanyInvitation[]
-
-  permissions RolePermission[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([companyId, clerkRole])
+  @@unique([companyId, slug])
+  // Optional systemRole/clerkRoleKey uniqueness is enforced in role-seeding logic.
+  @@index([companyId, systemRole])
+  @@index([companyId, clerkRoleKey])
   @@index([companyId])
 }
-
-//  PERMISSIONS
 
 model Permission {
-  id String @id @default(uuid())
-
-  name String
-
-  slug String @unique
-
+  id          String         @id @default(uuid()) @db.Uuid
+  code        PermissionCode @unique
+  name        String
   description String?
-
-  resource String
-
-  action String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   roles RolePermission[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
-//  ROLE - PERMISSION
 model RolePermission {
-  roleId       String
-  permissionId String
+  roleId       String   @db.Uuid
+  permissionId String   @db.Uuid
+  createdAt    DateTime @default(now())
 
-  role CompanyRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
+  role       CompanyRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
   @@index([permissionId])
 }
 
-//  COMPANY INVITATION
 model CompanyInvitation {
-  id String @id @default(uuid())
+  id                 String           @id @default(uuid()) @db.Uuid
+  companyId          String           @db.Uuid
+  roleId             String           @db.Uuid
+  invitedByMemberId  String?          @db.Uuid
+  acceptedByUserId   String?          @db.Uuid
+  email              String
+  // Null is allowed briefly while the external Clerk invitation is being created.
+  clerkInvitationId  String?          @unique
+  status             InvitationStatus @default(PENDING)
+  department         String?
+  jobTitle           String?
+  employeeId         String?
+  expiresAt          DateTime
+  acceptedAt         DateTime?
+  revokedAt          DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  companyId String
+  company         Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  role            CompanyRole   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  invitedByMember CompanyMember? @relation("InvitationInviter", fields: [invitedByMemberId], references: [id], onDelete: SetNull)
+  acceptedBy      User?         @relation("InvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
 
-  roleId String
-
-  invitedById String
-
-  email String
-
-  /**
-   * Clerk's invitation ID.
-   * ResolveHub should NOT store or generate
-   * its own authentication token.
-   */
-  clerkInvitationId String @unique
-
-  status InvitationStatus @default(PENDING)
-
-  department String?
-
-  jobTitle String?
-
-  employeeId String?
-
-  expiresAt DateTime
-
-  acceptedAt DateTime?
-
-  revokedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  role CompanyRole @relation(fields: [roleId], references: [id])
-
-  invitedBy User @relation("InvitationInviter", fields: [invitedById], references: [id])
-
-  @@index([companyId])
-  @@index([email])
-  @@index([status])
+  @@index([companyId, status])
+  @@index([email, status])
   @@index([expiresAt])
-  @@index([roleId])
 }
 
-// AUDIT LOG
+// -----------------------------------------------------------------------------
+// CUSTOMER INTAKE AND CASE WORKFLOW
+// -----------------------------------------------------------------------------
+
+model CaseRequest {
+  id                 String            @id @default(uuid()) @db.Uuid
+  companyId          String            @db.Uuid
+  // Generated by the backend per company, e.g. RH-2026-000123.
+  requestNumber      String
+  submitterUserId    String?           @db.Uuid
+  requesterName      String
+  requesterEmail     String
+  requesterPhone     String?
+  title              String
+  description        String
+  category           CaseCategory      @default(OTHER)
+  requestedPriority  CasePriority?
+  channel            RequestChannel    @default(WEB_FORM)
+  status             CaseRequestStatus @default(SUBMITTED)
+  reviewedByMemberId String?           @db.Uuid
+  reviewedAt         DateTime?
+  rejectionReason    String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  deletedAt          DateTime?
+
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  submitter   User?          @relation("RequestSubmitter", fields: [submitterUserId], references: [id], onDelete: SetNull)
+  reviewer    CompanyMember? @relation("RequestReviewer", fields: [reviewedByMemberId], references: [id], onDelete: SetNull)
+  case        Case?
+  evidence    Evidence[]
+
+  @@unique([companyId, requestNumber])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, requesterEmail])
+  @@index([submitterUserId])
+  @@index([reviewedByMemberId])
+}
+
+model Case {
+  id                String       @id @default(uuid()) @db.Uuid
+  companyId         String       @db.Uuid
+  // Generated by the backend per company; not a globally unique business number.
+  caseNumber        String
+  // A request can produce at most one case. Null for cases created internally.
+  requestId         String?      @unique @db.Uuid
+  title             String
+  description       String
+  category          CaseCategory @default(OTHER)
+  status            CaseStatus   @default(OPEN)
+  priority          CasePriority @default(NORMAL)
+  origin            CaseOrigin   @default(INTERNAL)
+  createdByUserId   String       @db.Uuid
+  requesterUserId   String?      @db.Uuid
+  // Contact snapshot preserves the requester details even if their profile changes.
+  requesterName     String?
+  requesterEmail    String?
+  requesterPhone    String?
+  isEscalated       Boolean      @default(false)
+  escalatedAt       DateTime?
+  resolvedAt        DateTime?
+  closedAt          DateTime?
+  lastActivityAt    DateTime     @default(now())
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  deletedAt         DateTime?
+
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  request      CaseRequest?     @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  createdBy    User             @relation("CaseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  requester    User?            @relation("CaseRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
+  assignments  CaseAssignment[]
+  comments     CaseComment[]
+  evidence     Evidence[]
+  activities   CaseActivity[]
+  resolutions  CaseResolution[]
+  sla          CaseSLA?
+
+  @@unique([companyId, caseNumber])
+  @@index([companyId, status, updatedAt])
+  @@index([companyId, priority, createdAt])
+  @@index([companyId, isEscalated, status])
+  @@index([createdByUserId])
+  @@index([requesterUserId])
+}
+
+model CaseAssignment {
+  id                 String    @id @default(uuid()) @db.Uuid
+  caseId             String    @db.Uuid
+  memberId           String    @db.Uuid
+  assignedByMemberId String?   @db.Uuid
+  assignedAt         DateTime  @default(now())
+  unassignedAt       DateTime?
+  note               String?
+
+  case       Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  member     CompanyMember @relation("AssignedMember", fields: [memberId], references: [id], onDelete: Restrict)
+  assignedBy CompanyMember? @relation("AssignmentActor", fields: [assignedByMemberId], references: [id], onDelete: SetNull)
+
+  @@index([caseId, unassignedAt])
+  @@index([memberId, unassignedAt])
+  @@index([assignedByMemberId])
+}
+
+model CaseComment {
+  id             String           @id @default(uuid()) @db.Uuid
+  caseId         String           @db.Uuid
+  authorUserId   String?          @db.Uuid
+  // Snapshot fields support guest/requester messages and preserve attribution.
+  authorName     String?
+  authorEmail    String?
+  body           String
+  visibility     CommentVisibility @default(INTERNAL)
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  case   Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  author User? @relation("CommentAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([caseId, createdAt])
+  @@index([authorUserId])
+  @@index([caseId, visibility, createdAt])
+}
+
+model Evidence {
+  id                String             @id @default(uuid()) @db.Uuid
+  companyId         String             @db.Uuid
+  // At intake, requestId is set. Once a request is converted, caseId can also be set.
+  // Service layer must ensure that at least one parent is present and tenant IDs match.
+  requestId         String?            @db.Uuid
+  caseId            String?            @db.Uuid
+  uploadedByUserId  String?            @db.Uuid
+  originalFilename  String
+  storageKey        String             @unique
+  storageProvider   StorageProvider
+  mimeType          String
+  sizeBytes         Int
+  checksumSha256    String?
+  caption           String?
+  visibility        AttachmentVisibility @default(INTERNAL)
+  createdAt         DateTime            @default(now())
+  deletedAt         DateTime?
+
+  company    Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  request    CaseRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  case       Case?        @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  uploadedBy User?        @relation("EvidenceUploader", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, caseId, createdAt])
+  @@index([companyId, requestId, createdAt])
+  @@index([uploadedByUserId])
+}
+
+model CaseActivity {
+  id          String            @id @default(uuid()) @db.Uuid
+  companyId   String            @db.Uuid
+  caseId      String            @db.Uuid
+  actorUserId String?           @db.Uuid
+  type        CaseActivityType
+  visibility  ActivityVisibility @default(INTERNAL)
+  summary     String
+  // Use metadata for small, structured event details (e.g. from/to status or priority).
+  metadata    Json?
+  createdAt   DateTime          @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  case    Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  actor   User?   @relation("ActivityActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([companyId, createdAt])
+  @@index([caseId, createdAt])
+  @@index([actorUserId])
+  @@index([caseId, visibility, createdAt])
+}
+
+model CaseResolution {
+  id                String           @id @default(uuid()) @db.Uuid
+  caseId            String           @db.Uuid
+  proposedByUserId  String           @db.Uuid
+  decidedByUserId   String?          @db.Uuid
+  status            ResolutionStatus @default(PROPOSED)
+  summary           String
+  details           String?
+  decisionReason    String?
+  proposedAt        DateTime         @default(now())
+  decidedAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  case       Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  proposedBy User  @relation("ResolutionProposer", fields: [proposedByUserId], references: [id], onDelete: Restrict)
+  decidedBy  User? @relation("ResolutionDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([caseId, status, proposedAt])
+  @@index([proposedByUserId])
+  @@index([decidedByUserId])
+}
+
+// -----------------------------------------------------------------------------
+// SERVICE-LEVEL AGREEMENTS (SLA)
+// -----------------------------------------------------------------------------
+
+model SLAPolicy {
+  id                       String       @id @default(uuid()) @db.Uuid
+  companyId                String       @db.Uuid
+  createdByUserId          String?      @db.Uuid
+  name                     String
+  priority                 CasePriority
+  firstResponseMinutes     Int
+  resolutionMinutes        Int
+  isActive                 Boolean      @default(true)
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  createdBy User?    @relation("SLAPolicyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  cases     CaseSLA[]
+
+  @@unique([companyId, name])
+  @@index([companyId, priority, isActive])
+  @@index([createdByUserId])
+}
+
+model CaseSLA {
+  id                         String    @id @default(uuid()) @db.Uuid
+  caseId                     String    @unique @db.Uuid
+  policyId                   String?   @db.Uuid
+  // Snapshot policy targets so edits to a policy do not silently change existing cases.
+  firstResponseTargetMinutes Int
+  resolutionTargetMinutes    Int
+  firstResponseDueAt         DateTime
+  resolutionDueAt            DateTime
+  firstRespondedAt           DateTime?
+  firstResponseBreachedAt    DateTime?
+  resolutionBreachedAt       DateTime?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  case   Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  policy SLAPolicy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
+
+  @@index([firstResponseDueAt])
+  @@index([resolutionDueAt])
+  @@index([firstResponseBreachedAt])
+  @@index([resolutionBreachedAt])
+}
+
+// -----------------------------------------------------------------------------
+// AUDITABILITY, NOTIFICATIONS, CLERK WEBHOOK IDEMPOTENCY
+// -----------------------------------------------------------------------------
+
 model AuditLog {
-  id String @id @default(uuid())
-
-  actorId String?
-
-  companyId String?
-
-  action AuditAction
-
-  entity AuditEntity
-
-  entityId String?
-
-  /**
-   * Useful for storing information about
-   * what changed without creating many columns.
-   */
-  metadata Json?
-
+  id        String     @id @default(uuid()) @db.Uuid
+  actorId   String?    @db.Uuid
+  companyId String?    @db.Uuid
+  action    AuditAction
+  entity    AuditEntity
+  // Generic entity reference avoids polymorphic foreign keys; entity + entityId identify the record.
+  entityId  String?
+  metadata  Json?
   ipAddress String?
-
   userAgent String?
+  requestId String?
+  createdAt DateTime   @default(now())
 
-  createdAt DateTime @default(now())
-
-  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
-
+  actor   User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
-  @@index([actorId])
-  @@index([companyId])
-  @@index([entity])
-  @@index([entityId])
-  @@index([action])
-  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([companyId, createdAt])
+  @@index([entity, entityId])
+  @@index([action, createdAt])
+  @@index([requestId])
 }
 
-// CASE
-model Case {
-  id String @id @default(uuid())
+model Notification {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  companyId   String?          @db.Uuid
+  type        NotificationType
+  title       String
+  body        String
+  actionUrl   String?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
 
-  companyId String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
-  caseNumber String @unique
-
-  title String
-
-  description String?
-
-  status String
-
-  priority String?
-
-  createdById String
-
-  assignedToId String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  assignments CaseAssignment[]
-
-  createdBy User @relation("CaseCreator", fields: [createdById], references: [id])
-
-  @@index([companyId])
-  @@index([status])
-  @@index([createdById])
-  @@index([assignedToId])
+  @@index([userId, readAt, createdAt])
+  @@index([companyId, createdAt])
 }
 
-// CASE ASSIGNMENT
-model CaseAssignment {
-  id String @id @default(uuid())
+model ClerkWebhookEvent {
+  id              String                  @id @default(uuid()) @db.Uuid
+  // Clerk delivers webhooks at least once and events may arrive out of order.
+  clerkEventId    String                  @unique
+  eventType       String
+  status          WebhookProcessingStatus @default(RECEIVED)
+  payload         Json
+  attemptCount    Int                     @default(0)
+  lastError       String?
+  receivedAt      DateTime                @default(now())
+  processedAt     DateTime?
+  updatedAt       DateTime                @updatedAt
 
-  caseId   String
-  memberId String
-
-  assignedAt   DateTime  @default(now())
-  unassignedAt DateTime?
-
-  case Case @relation(fields: [caseId], references: [id], onDelete: Cascade)
-
-  member CompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  @@index([caseId])
-  @@index([memberId])
+  @@index([status, receivedAt])
+  @@index([eventType, receivedAt])
 }
