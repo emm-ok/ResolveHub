@@ -122,7 +122,7 @@ export async function handleUserDeleted(
     },
 
     data: {
-      status: "INACTIVE",
+      status: "SUSPENDED",
       deletedAt: new Date(),
     },
   });
