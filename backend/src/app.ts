@@ -7,6 +7,8 @@ import { prisma } from "./lib/prisma.js";
 import webhookRoutes from "./routes/webhook.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import { clerkMiddleware } from "@clerk/express";
+import caseRequestRoutes from "./routes/case-request.route.js";
+import companyRoutes from "./routes/company.route.js";
 
 const app: Application = express();
 
@@ -24,6 +26,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware())
 
 app.use("/api/users", userRoutes);
+app.use("/api/case-requests", caseRequestRoutes);
+app.use("/api/companies", companyRoutes);
 
 // app.get("/users", async(req, res) => {
 //     const users = await prisma.user.findMany();

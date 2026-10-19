@@ -1,15 +1,16 @@
 import {Router} from "express"
 import { requireAuthentication } from "../middleware/auth.middleware.js";
+import { acceptCaseRequestController, rejectCaseRequestController, submitCaseRequestController } from "../controllers/case-request.controller.js";
 
 
 const router = Router();
 
-router.post("/:slug/requests", requireAuthentication, submitCaseRequest);
+router.post("/:slug/requests", requireAuthentication, submitCaseRequestController);
 
 // router.get("/:companyId/requests", requireAuthentication, getCaseRequests);
 
-router.post("/:companyId/requests/:requestId/accept", requireAuthentication, acceptCaseRequest)
-router.post("/:companyId/requests/:requestId/reject", requireAuthentication, rejectCaseRequest)
+router.post("/:companyId/requests/:requestId/accept", requireAuthentication, acceptCaseRequestController)
+router.post("/:companyId/requests/:requestId/reject", requireAuthentication, rejectCaseRequestController)
 
 
 // router.get("/:companyId/cases", requireAuthentication, getCases)

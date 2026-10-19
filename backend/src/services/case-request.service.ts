@@ -181,7 +181,16 @@ export async function acceptCaseRequest({
                 );
             }
 
-            if (request.caseId) {
+            const existingCase = await tx.case.findUnique({
+                where: {
+                    requestId: request.id,
+                },
+                select: {
+                    id: true
+                }
+            })
+
+            if (request.caseId || existingCase) {
                 throw new Error(
                     "This request has already been converted into a case.",
                 );

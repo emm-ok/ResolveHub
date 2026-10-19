@@ -61,7 +61,6 @@ export async function createCompany(
     return prisma.$transaction(async (tx) => {
         const company = await tx.company.create({
             data: {
-                clerkOrganizationId: input.clerkOrganizationId,
                 name: input.name,
                 slug,
 
@@ -89,7 +88,7 @@ export async function createCompany(
         // Creates default SLA policies for this company.
         await seedCompanySLAPolicies(company.id, tx);
 
-        // The creator is an ADMIN, not a separate OWNER system role.
+        // The creator is an ADMIN
         const adminRole = await tx.companyRole.findUnique({
             where: {
                 companyId_slug: {

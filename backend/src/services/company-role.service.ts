@@ -8,7 +8,6 @@ const DEFAULT_ROLES: {
     slug: string;
     description: string;
     isDefault: boolean;
-    clerkRoleKey: string | null;
 }[] = [
         {
             type: "ADMIN",
@@ -16,7 +15,6 @@ const DEFAULT_ROLES: {
             slug: "admin",
             description: "Manage company operations, members, and cases.",
             isDefault: false,
-            clerkRoleKey: "org:admin",
         },
 
         {
@@ -25,7 +23,6 @@ const DEFAULT_ROLES: {
             slug: "agent",
             description: "Handle assigned cases and customer communication.",
             isDefault: true,
-            clerkRoleKey: "org:member",
         },
 
         {
@@ -34,7 +31,6 @@ const DEFAULT_ROLES: {
             slug: "investigator",
             description: "Investigate cases and submit resolution proposals.",
             isDefault: false,
-            clerkRoleKey: null,
         },
 
         {
@@ -43,7 +39,6 @@ const DEFAULT_ROLES: {
             slug: "viewer",
             description: "Read authorized case and request information.",
             isDefault: false,
-            clerkRoleKey: null,
         },
     ];
 
@@ -81,7 +76,6 @@ export async function seedCompanyRoles(
                 slug: roleDefinition.slug,
                 description: roleDefinition.description,
                 systemRole: roleDefinition.type,
-                clerkRoleKey: roleDefinition.clerkRoleKey,
                 isDefault: roleDefinition.isDefault,
             },
         });

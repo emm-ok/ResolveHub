@@ -40,8 +40,6 @@ const optionalUrl = z.preprocess(
 
 export const createCompanySchema = z
     .object({
-        clerkOrganizationId: z.string().trim().min(3).max(255),
-
         name: z.string().trim().min(2).max(120),
 
         slug: z.preprocess(
