@@ -294,7 +294,6 @@ model User {
 model Company {
   id                  String        @id @default(uuid()) @db.Uuid
   // Clerk Organization ID. ResolveHub does not issue Clerk IDs itself.
-  clerkOrganizationId String        @unique
   name                String
   slug                String        @unique
   email               String?
@@ -309,12 +308,12 @@ model Company {
   timezone            String        @default("UTC")
   publicIntakeEnabled Boolean       @default(true)
   status              CompanyStatus @default(ACTIVE)
-  createdByUserId     String?       @db.Uuid
+  createdByUserId     String        @db.Uuid
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   deletedAt           DateTime?
 
-  createdBy     User?               @relation("CompanyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  createdBy     User                @relation("CompanyCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
   memberships   CompanyMember[]
   roles         CompanyRole[]
   invitations   CompanyInvitation[]
@@ -331,21 +330,20 @@ model Company {
 }
 
 model CompanyMember {
-  id                String           @id @default(uuid()) @db.Uuid
-  userId            String           @db.Uuid
-  companyId         String           @db.Uuid
-  roleId            String           @db.Uuid
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  companyId   String           @db.Uuid
+  roleId      String           @db.Uuid
   // Optional ID from Clerk's organization-membership record for webhook sync.
-  clerkMembershipId String?          @unique
-  status            MembershipStatus @default(ACTIVE)
-  department        String?
-  jobTitle          String?
-  employeeId        String?
-  joinedAt          DateTime         @default(now())
-  suspendedAt       DateTime?
-  removedAt         DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  status      MembershipStatus @default(ACTIVE)
+  department  String?
+  jobTitle    String?
+  employeeId  String?
+  joinedAt    DateTime         @default(now())
+  suspendedAt DateTime?
+  removedAt   DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   user             User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   company          Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
@@ -364,18 +362,17 @@ model CompanyMember {
 }
 
 model CompanyRole {
-  id           String          @id @default(uuid()) @db.Uuid
-  companyId    String          @db.Uuid
-  name         String
-  slug         String
-  description  String?
+  id          String          @id @default(uuid()) @db.Uuid
+  companyId   String          @db.Uuid
+  name        String
+  slug        String
+  description String?
   // Optional designation for seeded/system roles; null for custom roles.
-  systemRole   SystemRoleType?
+  systemRole  SystemRoleType?
   // Clerk role key can vary by Clerk configuration and custom-role setup.
-  clerkRoleKey String?
-  isDefault    Boolean         @default(false)
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  isDefault   Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   company     Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
   members     CompanyMember[]
@@ -385,7 +382,6 @@ model CompanyRole {
   @@unique([companyId, slug])
   // Optional systemRole/clerkRoleKey uniqueness is enforced in role-seeding logic.
   @@index([companyId, systemRole])
-  @@index([companyId, clerkRoleKey])
   @@index([companyId])
 }
 
@@ -413,23 +409,24 @@ model RolePermission {
 }
 
 model CompanyInvitation {
-  id                String           @id @default(uuid()) @db.Uuid
-  companyId         String           @db.Uuid
-  roleId            String           @db.Uuid
-  invitedByMemberId String?          @db.Uuid
-  acceptedByUserId  String?          @db.Uuid
+  id                String  @id @default(uuid()) @db.Uuid
+  companyId         String  @db.Uuid
+  roleId            String  @db.Uuid
+  invitedByMemberId String? @db.Uuid
+  acceptedByUserId  String? @db.Uuid
   email             String
+
+  tokenHash  String           @unique
   // Null is allowed briefly while the external Clerk invitation is being created.
-  clerkInvitationId String?          @unique
-  status            InvitationStatus @default(PENDING)
-  department        String?
-  jobTitle          String?
-  employeeId        String?
-  expiresAt         DateTime
-  acceptedAt        DateTime?
-  revokedAt         DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  status     InvitationStatus @default(PENDING)
+  department String?
+  jobTitle   String?
+  employeeId String?
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   company         Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
   role            CompanyRole    @relation(fields: [roleId], references: [id], onDelete: Restrict)
