@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -259,72 +258,72 @@ enum WebhookProcessingStatus {
 // -----------------------------------------------------------------------------
 
 model User {
-  id          String       @id @default(uuid()) @db.Uuid
+  id           String       @id @default(uuid()) @db.Uuid
   // Stable Clerk user ID; do not use the email address as the identity key.
-  clerkId     String       @unique
-  name        String?
-  email       String       @unique
-  phone       String?
-  avatarUrl   String?
+  clerkId      String       @unique
+  name         String?
+  email        String       @unique
+  phone        String?
+  avatarUrl    String?
   platformRole PlatformRole @default(USER)
-  status      UserStatus   @default(ACTIVE)
-  lastLoginAt DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  deletedAt   DateTime?
+  status       UserStatus   @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
 
-  memberships          CompanyMember[]
-  createdCompanies     Company[]          @relation("CompanyCreator")
-  submittedRequests    CaseRequest[]      @relation("RequestSubmitter")
-  requestedCases       Case[]             @relation("CaseRequester")
-  createdCases         Case[]             @relation("CaseCreator")
-  comments             CaseComment[]      @relation("CommentAuthor")
-  uploadedEvidence     Evidence[]         @relation("EvidenceUploader")
-  caseActivities       CaseActivity[]     @relation("ActivityActor")
-  proposedResolutions  CaseResolution[]   @relation("ResolutionProposer")
-  decidedResolutions   CaseResolution[]   @relation("ResolutionDecider")
-  acceptedInvitations  CompanyInvitation[] @relation("InvitationAcceptor")
-  auditLogs            AuditLog[]         @relation("AuditActor")
-  notifications        Notification[]
-  createdSlaPolicies   SLAPolicy[]        @relation("SLAPolicyCreator")
+  memberships         CompanyMember[]
+  createdCompanies    Company[]           @relation("CompanyCreator")
+  submittedRequests   CaseRequest[]       @relation("RequestSubmitter")
+  requestedCases      Case[]              @relation("CaseRequester")
+  createdCases        Case[]              @relation("CaseCreator")
+  comments            CaseComment[]       @relation("CommentAuthor")
+  uploadedEvidence    Evidence[]          @relation("EvidenceUploader")
+  caseActivities      CaseActivity[]      @relation("ActivityActor")
+  proposedResolutions CaseResolution[]    @relation("ResolutionProposer")
+  decidedResolutions  CaseResolution[]    @relation("ResolutionDecider")
+  acceptedInvitations CompanyInvitation[] @relation("InvitationAcceptor")
+  auditLogs           AuditLog[]          @relation("AuditActor")
+  notifications       Notification[]
+  createdSlaPolicies  SLAPolicy[]         @relation("SLAPolicyCreator")
 
   @@index([status])
   @@index([platformRole])
 }
 
 model Company {
-  id                   String        @id @default(uuid()) @db.Uuid
+  id                  String        @id @default(uuid()) @db.Uuid
   // Clerk Organization ID. ResolveHub does not issue Clerk IDs itself.
-  clerkOrganizationId  String        @unique
-  name                 String
-  slug                 String        @unique
-  email                String?
-  phone                String?
-  website              String?
-  logoUrl              String?
-  description          String?
-  address              String?
-  city                 String?
-  state                String?
-  country              String?
-  timezone             String        @default("UTC")
-  publicIntakeEnabled  Boolean       @default(true)
-  status               CompanyStatus @default(ACTIVE)
-  createdByUserId      String?       @db.Uuid
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
-  deletedAt            DateTime?
+  clerkOrganizationId String        @unique
+  name                String
+  slug                String        @unique
+  email               String?
+  phone               String?
+  website             String?
+  logoUrl             String?
+  description         String?
+  address             String?
+  city                String?
+  state               String?
+  country             String?
+  timezone            String        @default("UTC")
+  publicIntakeEnabled Boolean       @default(true)
+  status              CompanyStatus @default(ACTIVE)
+  createdByUserId     String?       @db.Uuid
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  deletedAt           DateTime?
 
-  createdBy    User?              @relation("CompanyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  memberships  CompanyMember[]
-  roles        CompanyRole[]
-  invitations  CompanyInvitation[]
-  caseRequests CaseRequest[]
-  cases        Case[]
-  evidence     Evidence[]
-  activities   CaseActivity[]
-  slaPolicies  SLAPolicy[]
-  auditLogs    AuditLog[]
+  createdBy     User?               @relation("CompanyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  memberships   CompanyMember[]
+  roles         CompanyRole[]
+  invitations   CompanyInvitation[]
+  caseRequests  CaseRequest[]
+  cases         Case[]
+  evidence      Evidence[]
+  activities    CaseActivity[]
+  slaPolicies   SLAPolicy[]
+  auditLogs     AuditLog[]
   notifications Notification[]
 
   @@index([status, createdAt])
@@ -332,29 +331,29 @@ model Company {
 }
 
 model CompanyMember {
-  id                 String           @id @default(uuid()) @db.Uuid
-  userId             String           @db.Uuid
-  companyId          String           @db.Uuid
-  roleId             String           @db.Uuid
+  id                String           @id @default(uuid()) @db.Uuid
+  userId            String           @db.Uuid
+  companyId         String           @db.Uuid
+  roleId            String           @db.Uuid
   // Optional ID from Clerk's organization-membership record for webhook sync.
-  clerkMembershipId  String?          @unique
-  status             MembershipStatus @default(ACTIVE)
-  department         String?
-  jobTitle           String?
-  employeeId         String?
-  joinedAt           DateTime         @default(now())
-  suspendedAt        DateTime?
-  removedAt          DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  clerkMembershipId String?          @unique
+  status            MembershipStatus @default(ACTIVE)
+  department        String?
+  jobTitle          String?
+  employeeId        String?
+  joinedAt          DateTime         @default(now())
+  suspendedAt       DateTime?
+  removedAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  user             User               @relation(fields: [userId], references: [id], onDelete: Restrict)
-  company          Company            @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  role             CompanyRole        @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  caseAssignments  CaseAssignment[]   @relation("AssignedMember")
-  assignmentsMade  CaseAssignment[]   @relation("AssignmentActor")
+  user             User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  company          Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  role             CompanyRole         @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  caseAssignments  CaseAssignment[]    @relation("AssignedMember")
+  assignmentsMade  CaseAssignment[]    @relation("AssignmentActor")
   invitationsSent  CompanyInvitation[] @relation("InvitationInviter")
-  requestsReviewed CaseRequest[]      @relation("RequestReviewer")
+  requestsReviewed CaseRequest[]       @relation("RequestReviewer")
 
   @@unique([userId, companyId])
   // employeeId is optional; uniqueness for non-empty values is enforced by the service layer.
@@ -378,10 +377,10 @@ model CompanyRole {
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
-  company      Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  members      CompanyMember[]
-  invitations  CompanyInvitation[]
-  permissions  RolePermission[]
+  company     Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  members     CompanyMember[]
+  invitations CompanyInvitation[]
+  permissions RolePermission[]
 
   @@unique([companyId, slug])
   // Optional systemRole/clerkRoleKey uniqueness is enforced in role-seeding logic.
@@ -414,28 +413,28 @@ model RolePermission {
 }
 
 model CompanyInvitation {
-  id                 String           @id @default(uuid()) @db.Uuid
-  companyId          String           @db.Uuid
-  roleId             String           @db.Uuid
-  invitedByMemberId  String?          @db.Uuid
-  acceptedByUserId   String?          @db.Uuid
-  email              String
+  id                String           @id @default(uuid()) @db.Uuid
+  companyId         String           @db.Uuid
+  roleId            String           @db.Uuid
+  invitedByMemberId String?          @db.Uuid
+  acceptedByUserId  String?          @db.Uuid
+  email             String
   // Null is allowed briefly while the external Clerk invitation is being created.
-  clerkInvitationId  String?          @unique
-  status             InvitationStatus @default(PENDING)
-  department         String?
-  jobTitle           String?
-  employeeId         String?
-  expiresAt          DateTime
-  acceptedAt         DateTime?
-  revokedAt          DateTime?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  clerkInvitationId String?          @unique
+  status            InvitationStatus @default(PENDING)
+  department        String?
+  jobTitle          String?
+  employeeId        String?
+  expiresAt         DateTime
+  acceptedAt        DateTime?
+  revokedAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  company         Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  role            CompanyRole   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  role            CompanyRole    @relation(fields: [roleId], references: [id], onDelete: Restrict)
   invitedByMember CompanyMember? @relation("InvitationInviter", fields: [invitedByMemberId], references: [id], onDelete: SetNull)
-  acceptedBy      User?         @relation("InvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+  acceptedBy      User?          @relation("InvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
 
   @@index([companyId, status])
   @@index([email, status])
@@ -468,11 +467,13 @@ model CaseRequest {
   updatedAt          DateTime          @updatedAt
   deletedAt          DateTime?
 
-  company     Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  submitter   User?          @relation("RequestSubmitter", fields: [submitterUserId], references: [id], onDelete: SetNull)
-  reviewer    CompanyMember? @relation("RequestReviewer", fields: [reviewedByMemberId], references: [id], onDelete: SetNull)
-  case        Case?
-  evidence    Evidence[]
+  caseId String? @db.Uuid
+
+  company   Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  submitter User?          @relation("RequestSubmitter", fields: [submitterUserId], references: [id], onDelete: SetNull)
+  reviewer  CompanyMember? @relation("RequestReviewer", fields: [reviewedByMemberId], references: [id], onDelete: SetNull)
+  case      Case?
+  evidence  Evidence[]
 
   @@unique([companyId, requestNumber])
   @@index([companyId, status, createdAt])
@@ -482,43 +483,43 @@ model CaseRequest {
 }
 
 model Case {
-  id                String       @id @default(uuid()) @db.Uuid
-  companyId         String       @db.Uuid
+  id              String       @id @default(uuid()) @db.Uuid
+  companyId       String       @db.Uuid
   // Generated by the backend per company; not a globally unique business number.
-  caseNumber        String
+  caseNumber      String
   // A request can produce at most one case. Null for cases created internally.
-  requestId         String?      @unique @db.Uuid
-  title             String
-  description       String
-  category          CaseCategory @default(OTHER)
-  status            CaseStatus   @default(OPEN)
-  priority          CasePriority @default(NORMAL)
-  origin            CaseOrigin   @default(INTERNAL)
-  createdByUserId   String       @db.Uuid
-  requesterUserId   String?      @db.Uuid
+  requestId       String?      @unique @db.Uuid
+  title           String
+  description     String
+  category        CaseCategory @default(OTHER)
+  status          CaseStatus   @default(OPEN)
+  priority        CasePriority @default(NORMAL)
+  origin          CaseOrigin   @default(INTERNAL)
+  createdByUserId String       @db.Uuid
+  requesterUserId String?      @db.Uuid
   // Contact snapshot preserves the requester details even if their profile changes.
-  requesterName     String?
-  requesterEmail    String?
-  requesterPhone    String?
-  isEscalated       Boolean      @default(false)
-  escalatedAt       DateTime?
-  resolvedAt        DateTime?
-  closedAt          DateTime?
-  lastActivityAt    DateTime     @default(now())
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  deletedAt         DateTime?
+  requesterName   String?
+  requesterEmail  String?
+  requesterPhone  String?
+  isEscalated     Boolean      @default(false)
+  escalatedAt     DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  lastActivityAt  DateTime     @default(now())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
 
-  company      Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  request      CaseRequest?     @relation(fields: [requestId], references: [id], onDelete: SetNull)
-  createdBy    User             @relation("CaseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
-  requester    User?            @relation("CaseRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
-  assignments  CaseAssignment[]
-  comments     CaseComment[]
-  evidence     Evidence[]
-  activities   CaseActivity[]
-  resolutions  CaseResolution[]
-  sla          CaseSLA?
+  company     Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  request     CaseRequest?     @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  createdBy   User             @relation("CaseCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  requester   User?            @relation("CaseRequester", fields: [requesterUserId], references: [id], onDelete: SetNull)
+  assignments CaseAssignment[]
+  comments    CaseComment[]
+  evidence    Evidence[]
+  activities  CaseActivity[]
+  resolutions CaseResolution[]
+  sla         CaseSLA?
 
   @@unique([companyId, caseNumber])
   @@index([companyId, status, updatedAt])
@@ -537,8 +538,8 @@ model CaseAssignment {
   unassignedAt       DateTime?
   note               String?
 
-  case       Case          @relation(fields: [caseId], references: [id], onDelete: Cascade)
-  member     CompanyMember @relation("AssignedMember", fields: [memberId], references: [id], onDelete: Restrict)
+  case       Case           @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  member     CompanyMember  @relation("AssignedMember", fields: [memberId], references: [id], onDelete: Restrict)
   assignedBy CompanyMember? @relation("AssignmentActor", fields: [assignedByMemberId], references: [id], onDelete: SetNull)
 
   @@index([caseId, unassignedAt])
@@ -547,18 +548,18 @@ model CaseAssignment {
 }
 
 model CaseComment {
-  id             String           @id @default(uuid()) @db.Uuid
-  caseId         String           @db.Uuid
-  authorUserId   String?          @db.Uuid
+  id           String            @id @default(uuid()) @db.Uuid
+  caseId       String            @db.Uuid
+  authorUserId String?           @db.Uuid
   // Snapshot fields support guest/requester messages and preserve attribution.
-  authorName     String?
-  authorEmail    String?
-  body           String
-  visibility     CommentVisibility @default(INTERNAL)
-  editedAt       DateTime?
-  deletedAt      DateTime?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  authorName   String?
+  authorEmail  String?
+  body         String
+  visibility   CommentVisibility @default(INTERNAL)
+  editedAt     DateTime?
+  deletedAt    DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   case   Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
   author User? @relation("CommentAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
@@ -569,23 +570,23 @@ model CaseComment {
 }
 
 model Evidence {
-  id                String             @id @default(uuid()) @db.Uuid
-  companyId         String             @db.Uuid
+  id               String               @id @default(uuid()) @db.Uuid
+  companyId        String               @db.Uuid
   // At intake, requestId is set. Once a request is converted, caseId can also be set.
   // Service layer must ensure that at least one parent is present and tenant IDs match.
-  requestId         String?            @db.Uuid
-  caseId            String?            @db.Uuid
-  uploadedByUserId  String?            @db.Uuid
-  originalFilename  String
-  storageKey        String             @unique
-  storageProvider   StorageProvider
-  mimeType          String
-  sizeBytes         Int
-  checksumSha256    String?
-  caption           String?
-  visibility        AttachmentVisibility @default(INTERNAL)
-  createdAt         DateTime            @default(now())
-  deletedAt         DateTime?
+  requestId        String?              @db.Uuid
+  caseId           String?              @db.Uuid
+  uploadedByUserId String?              @db.Uuid
+  originalFilename String
+  storageKey       String               @unique
+  storageProvider  StorageProvider
+  mimeType         String
+  sizeBytes        Int
+  checksumSha256   String?
+  caption          String?
+  visibility       AttachmentVisibility @default(INTERNAL)
+  createdAt        DateTime             @default(now())
+  deletedAt        DateTime?
 
   company    Company      @relation(fields: [companyId], references: [id], onDelete: Restrict)
   request    CaseRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
@@ -598,16 +599,16 @@ model Evidence {
 }
 
 model CaseActivity {
-  id          String            @id @default(uuid()) @db.Uuid
-  companyId   String            @db.Uuid
-  caseId      String            @db.Uuid
-  actorUserId String?           @db.Uuid
+  id          String             @id @default(uuid()) @db.Uuid
+  companyId   String             @db.Uuid
+  caseId      String             @db.Uuid
+  actorUserId String?            @db.Uuid
   type        CaseActivityType
   visibility  ActivityVisibility @default(INTERNAL)
   summary     String
   // Use metadata for small, structured event details (e.g. from/to status or priority).
   metadata    Json?
-  createdAt   DateTime          @default(now())
+  createdAt   DateTime           @default(now())
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
   case    Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
@@ -620,18 +621,18 @@ model CaseActivity {
 }
 
 model CaseResolution {
-  id                String           @id @default(uuid()) @db.Uuid
-  caseId            String           @db.Uuid
-  proposedByUserId  String           @db.Uuid
-  decidedByUserId   String?          @db.Uuid
-  status            ResolutionStatus @default(PROPOSED)
-  summary           String
-  details           String?
-  decisionReason    String?
-  proposedAt        DateTime         @default(now())
-  decidedAt         DateTime?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id               String           @id @default(uuid()) @db.Uuid
+  caseId           String           @db.Uuid
+  proposedByUserId String           @db.Uuid
+  decidedByUserId  String?          @db.Uuid
+  status           ResolutionStatus @default(PROPOSED)
+  summary          String
+  details          String?
+  decisionReason   String?
+  proposedAt       DateTime         @default(now())
+  decidedAt        DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   case       Case  @relation(fields: [caseId], references: [id], onDelete: Cascade)
   proposedBy User  @relation("ResolutionProposer", fields: [proposedByUserId], references: [id], onDelete: Restrict)
@@ -647,19 +648,20 @@ model CaseResolution {
 // -----------------------------------------------------------------------------
 
 model SLAPolicy {
-  id                       String       @id @default(uuid()) @db.Uuid
-  companyId                String       @db.Uuid
-  createdByUserId          String?      @db.Uuid
-  name                     String
-  priority                 CasePriority
-  firstResponseMinutes     Int
-  resolutionMinutes        Int
-  isActive                 Boolean      @default(true)
-  createdAt                DateTime     @default(now())
-  updatedAt                DateTime     @updatedAt
+  id                   String       @id @default(uuid()) @db.Uuid
+  companyId            String       @db.Uuid
+  createdByUserId      String?      @db.Uuid
+  name                 String
+  priority             CasePriority
+  firstResponseMinutes Int
+  resolutionMinutes    Int
+  isDefault            Boolean      @default(false)
+  isActive             Boolean      @default(true)
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  createdBy User?    @relation("SLAPolicyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  createdBy User?     @relation("SLAPolicyCreator", fields: [createdByUserId], references: [id], onDelete: SetNull)
   cases     CaseSLA[]
 
   @@unique([companyId, name])
@@ -682,7 +684,7 @@ model CaseSLA {
   createdAt                  DateTime  @default(now())
   updatedAt                  DateTime  @updatedAt
 
-  case   Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  case   Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
   policy SLAPolicy? @relation(fields: [policyId], references: [id], onDelete: SetNull)
 
   @@index([firstResponseDueAt])
@@ -696,9 +698,9 @@ model CaseSLA {
 // -----------------------------------------------------------------------------
 
 model AuditLog {
-  id        String     @id @default(uuid()) @db.Uuid
-  actorId   String?    @db.Uuid
-  companyId String?    @db.Uuid
+  id        String      @id @default(uuid()) @db.Uuid
+  actorId   String?     @db.Uuid
+  companyId String?     @db.Uuid
   action    AuditAction
   entity    AuditEntity
   // Generic entity reference avoids polymorphic foreign keys; entity + entityId identify the record.
@@ -707,7 +709,7 @@ model AuditLog {
   ipAddress String?
   userAgent String?
   requestId String?
-  createdAt DateTime   @default(now())
+  createdAt DateTime    @default(now())
 
   actor   User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -720,15 +722,15 @@ model AuditLog {
 }
 
 model Notification {
-  id          String           @id @default(uuid()) @db.Uuid
-  userId      String           @db.Uuid
-  companyId   String?          @db.Uuid
-  type        NotificationType
-  title       String
-  body        String
-  actionUrl   String?
-  readAt      DateTime?
-  createdAt   DateTime         @default(now())
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  companyId String?          @db.Uuid
+  type      NotificationType
+  title     String
+  body      String
+  actionUrl String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
 
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
@@ -738,17 +740,17 @@ model Notification {
 }
 
 model ClerkWebhookEvent {
-  id              String                  @id @default(uuid()) @db.Uuid
+  id           String                  @id @default(uuid()) @db.Uuid
   // Clerk delivers webhooks at least once and events may arrive out of order.
-  clerkEventId    String                  @unique
-  eventType       String
-  status          WebhookProcessingStatus @default(RECEIVED)
-  payload         Json
-  attemptCount    Int                     @default(0)
-  lastError       String?
-  receivedAt      DateTime                @default(now())
-  processedAt     DateTime?
-  updatedAt       DateTime                @updatedAt
+  clerkEventId String                  @unique
+  eventType    String
+  status       WebhookProcessingStatus @default(RECEIVED)
+  payload      Json
+  attemptCount Int                     @default(0)
+  lastError    String?
+  receivedAt   DateTime                @default(now())
+  processedAt  DateTime?
+  updatedAt    DateTime                @updatedAt
 
   @@index([status, receivedAt])
   @@index([eventType, receivedAt])
