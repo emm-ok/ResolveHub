@@ -97,8 +97,10 @@ export async function acceptCaseRequestController(
         return;
     }
 
-    const userId = req.user?.clerkId;
+    // const userId = req.user?.clerkId;
+    const {userId } = req.body;
 
+    console.log("UserId", userId)
     try {
         const result = await acceptCaseRequestService({
             clerkUserId: userId as string,

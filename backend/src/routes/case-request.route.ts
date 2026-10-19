@@ -11,8 +11,12 @@ router.post("/:companyId/requests",
 
 // router.get("/:companyId/requests", requireAuthentication, getCaseRequests);
 
-router.post("/:companyId/requests/:requestId/accept", requireAuthentication, acceptCaseRequestController)
-router.post("/:companyId/requests/:requestId/reject", requireAuthentication, rejectCaseRequestController)
+router.post("/:companyId/requests/:requestId/accept", 
+    // requireAuthentication, 
+    acceptCaseRequestController)
+router.post("/:companyId/requests/:requestId/reject", 
+    // requireAuthentication, 
+    rejectCaseRequestController)
 
 
 // router.get("/:companyId/cases", requireAuthentication, getCases)
