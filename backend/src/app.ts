@@ -38,6 +38,25 @@ app.use("/api/companies", companyRoutes);
 //     });
 // })
 
+app.get("/user", async(req, res) => {
+    const user =  await prisma.user.findUnique({
+        where: {
+            clerkId: "user_3Kt4iD1XmFZkbhcB0pkMDxyyhpB"
+        }
+    })
+
+    if(!user) {
+        return res.json({
+            message: "user not found"
+        })
+    }
+
+    return res.json({
+        message: `User with id ${user.clerkId} fetched successfully`,
+        user
+    })
+})
+
 // app.get("/", (req, res) => {
 //     res.status(200).json({ message: "Server is running successfully" });
 // });

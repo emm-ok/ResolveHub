@@ -68,6 +68,7 @@ export type CreateCaseRequestInput = z.infer<
 
 export const submitCaseRequestSchema = z
     .object({
+        clerkId: z.string(),
         companyId: z.string().uuid(),
 
         requesterName: z.string().trim().min(2).max(120),
@@ -107,14 +108,14 @@ export const rejectCaseRequestSchema = z
     })
     .strict();
 
-export const companySlugParamsSchema = z.object({
-    slug: z
-        .string()
-        .trim()
-        .min(2)
-        .max(100)
-        .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-});
+// export const companySlugParamsSchema = z.object({
+//     slug: z
+//         .string()
+//         .trim()
+//         .min(2)
+//         .max(100)
+//         .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+// });
 
 export const requestActionParamsSchema = z.object({
     companyId: z.string().uuid(),

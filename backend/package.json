@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "node prisma/seed.ts"
+    "db:seed": "node prisma/seed.ts",
+    "db:seed_companies": "node prisma/seed-companies.ts"
   },
   "keywords": [],
   "author": "",

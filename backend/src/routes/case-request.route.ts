@@ -5,7 +5,9 @@ import { acceptCaseRequestController, rejectCaseRequestController, submitCaseReq
 
 const router = Router();
 
-router.post("/:slug/requests", requireAuthentication, submitCaseRequestController);
+router.post("/:companyId/requests", 
+    // requireAuthentication, 
+    submitCaseRequestController);
 
 // router.get("/:companyId/requests", requireAuthentication, getCaseRequests);
 

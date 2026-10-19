@@ -1,84 +1,3 @@
-// import type { Request, Response } from "express";
-// import * as caseRequestService from "../services/case-request.service.js"
-
-// export const submitCaseRequest = async (req: Request, res: Response) => {
-//     try {
-//         const { rawInput } = req.body;
-
-//         const clerkId = req.user?.clerkId;
-
-//         await caseRequestService.submitCaseRequest(
-//             rawInput,
-//             {
-//                 authenticatedClerkUserId: clerkId as string
-
-//             })
-
-//         return res.status(200).json({
-//             message: "Request submitted successfully",
-//         })
-//     } catch (error) {
-//         console.error(error)
-//         return res.status(500).json({
-//             message: "Failed to submit request",
-//         })
-//     }
-// }
-
-
-// export const acceptCaseRequest = async (req: Request, res: Response) => {
-//     try {
-//         const { companyId, requestId } = req.params;
-
-//         const clerkId = req.user?.clerkId;
-
-//         const request = await caseRequestService.acceptCaseRequest({
-//             clerkUserId: clerkId as string,
-//             companyId: companyId as string,
-//             requestId: requestId as string
-//         })
-
-//         return res.status(200).json({
-//             message: "Request successfully accepted",
-//             case: request.case,
-//             request: request.request,
-//         })
-//     } catch (error) {
-//         console.error(error)
-//         return res.status(500).json({
-//             message: "Failed to accept request",
-//         })
-//     }
-// }
-
-// export const rejectCaseRequest = async (req: Request, res: Response) => {
-//     try {
-//         const { reason } = req.body;
-//         const { companyId, requestId } = req.params;
-
-//         const clerkId = req.user?.clerkId;
-
-//         const request = await caseRequestService.rejectCaseRequest({
-//             clerkUserId: clerkId as string,
-//             companyId: companyId as string,
-//             requestId: requestId as string,
-//             reason
-//         })
-
-//         return res.status(200).json({
-//             message: "Request successfully rejected",
-//             request,
-//         })
-//     } catch (error) {
-//         console.error(error)
-//         return res.status(500).json({
-//             message: "Failed to reject request",
-//         })
-//     }
-// }
-
-
-
 import type {
     Request,
     Response,
@@ -92,7 +11,6 @@ import { prisma } from "../lib/prisma.js";
 import {
     submitCaseRequestSchema,
     rejectCaseRequestSchema,
-    companySlugParamsSchema,
     requestActionParamsSchema,
 } from "../validation/case-request.schema.js";
 
@@ -125,16 +43,9 @@ export async function submitCaseRequestController(
     res: Response,
     next: NextFunction,
 ): Promise<void> {
-    const params = companySlugParamsSchema.safeParse(req.params);
-
-    if (!params.success) {
-        sendValidationError(res, params.error);
-        return;
-    }
-
     try {
         const company = await prisma.company.findUnique({
-            where: { slug: params.data.slug },
+            where: { id: req.params.companyId as string },
             select: { id: true },
         });
 
@@ -142,7 +53,7 @@ export async function submitCaseRequestController(
             res.status(404).json({ message: "Company not found." });
             return;
         }
-
+        const { clerkId } = req.body;
         // Never trust companyId or channel supplied by the customer.
         const parsedBody = submitCaseRequestSchema.safeParse({
             ...req.body,
@@ -155,11 +66,11 @@ export async function submitCaseRequestController(
             return;
         }
 
-        const userId = req.user?.clerkId; 
+        // const userId = req.user?.clerkId; 
 
         const caseRequest = await submitCaseRequestService(
             parsedBody.data,
-            { clerkUserId: userId as string },
+            { clerkUserId: clerkId as string },
         );
 
         res.status(201).json({
@@ -186,7 +97,7 @@ export async function acceptCaseRequestController(
         return;
     }
 
-    const userId = req.user?.clerkId; 
+    const userId = req.user?.clerkId;
 
     try {
         const result = await acceptCaseRequestService({
