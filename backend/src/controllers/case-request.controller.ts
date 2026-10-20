@@ -185,8 +185,11 @@ export async function getCaseRequestsController(
         return;
     }
 
-    const clerkUserId = req.user?.clerkId;
+    // const clerkUserId = req.user?.clerkId;
 
+    const { clerkUserId } = req.body
+
+    console.log("ClerkUserId", clerkUserId)
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
         return;
@@ -235,6 +238,7 @@ export async function getCaseRequestController(
     res: Response,
     next: NextFunction,
 ): Promise<void> {
+    console.log("getCaseRequest Controller", req)
     const params = caseRequestParamsSchema.safeParse(req.params);
 
     if (!params.success) {
@@ -242,8 +246,11 @@ export async function getCaseRequestController(
         return;
     }
 
-    const clerkUserId = req.user?.clerkId;
+    // const clerkUserId = req.user?.clerkId;
 
+    const { clerkUserId } = req.body
+
+    console.log("clerkUserId", clerkUserId)
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
         return;
@@ -285,7 +292,9 @@ export async function getCasesController(
         return;
     }
 
-    const clerkUserId = req.user?.clerkId;
+    // const clerkUserId = req.user?.clerkId;
+
+    const { clerkUserId } = req.body
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
@@ -342,7 +351,9 @@ export async function getCaseDetailsController(
         return;
     }
 
-    const clerkUserId = req.user?.clerkId;
+    // const clerkUserId = req.user?.clerkId;
+
+    const { clerkUserId } = req.body
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });

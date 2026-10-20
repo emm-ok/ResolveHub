@@ -681,11 +681,11 @@ export async function getCases({
                 id: true,
                 caseNumber: true,
                 title: true,
+                category: true,
                 status: true,
                 priority: true,
                 createdAt: true,
                 updatedAt: true,
-                dueAt: true,
             },
         }),
         prisma.case.count({ where }),
@@ -725,17 +725,55 @@ export async function getCaseDetails({
             caseNumber: true,
             title: true,
             description: true,
+            category: true,
             status: true,
             priority: true,
+            createdBy: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    memberships: {
+                        select: {
+                            role: {
+                                select: {
+                                    name: true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            request: {
+                select: {
+                    id: true,
+                    requestNumber: true
+                }
+            },
+            assignments: {
+                select: {
+                    member: {
+                        select: {
+                            user: {
+                                select: {
+                                    name: true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            sla: {
+                include: {
+                    policy: true
+                }
+            },
+            activities: {
+                include: {},
+                orderBy: { createdAt: "desc" }
+            },
             createdAt: true,
             updatedAt: true,
-            dueAt: true,
-
-            // Add relations below using their actual Prisma names:
-            // caseRequest: { select: { id: true, requestNumber: true, ... } },
-            // assignments: { select: { ... } },
-            // slaPolicy: { select: { ... } },
-            // activities: { select: { ... }, orderBy: { createdAt: "desc" } },
         },
     });
 
