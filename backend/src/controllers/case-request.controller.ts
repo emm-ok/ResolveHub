@@ -189,7 +189,6 @@ export async function getCaseRequestsController(
 
     const { clerkUserId } = req.body
 
-    console.log("ClerkUserId", clerkUserId)
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
         return;
@@ -238,7 +237,6 @@ export async function getCaseRequestController(
     res: Response,
     next: NextFunction,
 ): Promise<void> {
-    console.log("getCaseRequest Controller", req)
     const params = caseRequestParamsSchema.safeParse(req.params);
 
     if (!params.success) {
@@ -250,7 +248,6 @@ export async function getCaseRequestController(
 
     const { clerkUserId } = req.body
 
-    console.log("clerkUserId", clerkUserId)
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
         return;
