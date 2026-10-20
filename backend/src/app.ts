@@ -9,6 +9,7 @@ import userRoutes from "./routes/user.routes.js";
 import { clerkMiddleware } from "@clerk/express";
 import caseRequestRoutes from "./routes/case-request.route.js";
 import companyRoutes from "./routes/company.route.js";
+import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler.js";
 
 const app: Application = express();
 
@@ -38,28 +39,28 @@ app.use("/api/companies", companyRoutes);
 //     });
 // })
 
-app.get("/user", async(req, res) => {
-    const user =  await prisma.user.findUnique({
-        where: {
-            clerkId: "user_3Kt4iD1XmFZkbhcB0pkMDxyyhpB"
-        }
-    })
+// app.get("/user", async(req, res) => {
+//     const user =  await prisma.user.findUnique({
+//         where: {
+//             clerkId: "user_3Kt4iD1XmFZkbhcB0pkMDxyyhpB"
+//         }
+//     })
 
-    if(!user) {
-        return res.json({
-            message: "user not found"
-        })
-    }
+//     if(!user) {
+//         return res.json({
+//             message: "user not found"
+//         })
+//     }
 
-    return res.json({
-        message: `User with id ${user.clerkId} fetched successfully`,
-        user
-    })
-})
+//     return res.json({
+//         message: `User with id ${user.clerkId} fetched successfully`,
+//         user
+//     })
+// })
 
-// app.get("/", (req, res) => {
-//     res.status(200).json({ message: "Server is running successfully" });
-// });
+app.use(notFoundHandler);
+
+app.use(globalErrorHandler);
 
 const PORT = env.PORT || 5000;
 
