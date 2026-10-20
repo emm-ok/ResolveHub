@@ -5,19 +5,27 @@ import type {
 } from "express";
 
 import { getAuth } from "@clerk/express";
-import { RequestChannel } from "@prisma/client";
+import { CaseRequestStatus, CaseStatus, RequestChannel } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 
 import {
     submitCaseRequestSchema,
     rejectCaseRequestSchema,
     requestActionParamsSchema,
+    companyResourceParamsSchema,
+    caseRequestParamsSchema,
+    listResourcesQuerySchema,
+    caseDetailsParamsSchema,
 } from "../validation/case-request.schema.js";
 
 import {
     submitCaseRequest as submitCaseRequestService,
     acceptCaseRequest as acceptCaseRequestService,
     rejectCaseRequest as rejectCaseRequestService,
+    getCaseRequests,
+    getCaseRequest,
+    getCases,
+    getCaseDetails,
 } from "../services/case-request.service.js";
 
 function sendValidationError(res: Response, error: {
@@ -98,12 +106,11 @@ export async function acceptCaseRequestController(
     }
 
     // const userId = req.user?.clerkId;
-    const {userId } = req.body;
+    const { clerkId } = req.body;
 
-    console.log("UserId", userId)
     try {
         const result = await acceptCaseRequestService({
-            clerkUserId: userId as string,
+            clerkUserId: clerkId as string,
             companyId: params.data.companyId,
             requestId: params.data.requestId,
         });
@@ -139,11 +146,11 @@ export async function rejectCaseRequestController(
         return;
     }
 
-    const userId = req.user?.clerkId;
+    // const userId = req.user?.clerkId;
 
     try {
         const result = await rejectCaseRequestService({
-            clerkUserId: userId as string,
+            clerkUserId: parsedBody.data.clerkId as string,
             companyId: params.data.companyId,
             requestId: params.data.requestId,
             reason: parsedBody.data.reason,
@@ -151,6 +158,206 @@ export async function rejectCaseRequestController(
 
         res.status(200).json({
             message: "Case request rejected successfully.",
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
+export async function getCaseRequestsController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const params = companyResourceParamsSchema.safeParse(req.params);
+    const query = listResourcesQuerySchema.safeParse(req.query);
+
+    if (!params.success) {
+        sendValidationError(res, params.error);
+        return;
+    }
+
+    if (!query.success) {
+        sendValidationError(res, query.error);
+        return;
+    }
+
+    const clerkUserId = req.user?.clerkId;
+
+    if (!clerkUserId) {
+        res.status(401).json({ message: "Authentication required." });
+        return;
+    }
+
+    let status: CaseRequestStatus | undefined;
+
+    if (query.data.status) {
+        const parsedStatus = Object.values(CaseRequestStatus).find(
+            (value) => value === query.data.status,
+        );
+
+        if (!parsedStatus) {
+            res.status(400).json({ message: "Invalid case request status." });
+            return;
+        }
+
+        status = parsedStatus;
+    }
+
+    try {
+        const result = await getCaseRequests({
+            clerkUserId,
+            companyId: params.data.companyId,
+            page: query.data.page,
+            limit: query.data.limit,
+            ...(query.data.search !== undefined
+                ? { search: query.data.search }
+                : {}),
+            ...(status !== undefined ? { status } : {}),
+            sortOrder: query.data.sortOrder,
+        });
+
+        res.status(200).json({
+            message: "Case requests retrieved successfully.",
+            data: result.items,
+            pagination: result.pagination,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getCaseRequestController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const params = caseRequestParamsSchema.safeParse(req.params);
+
+    if (!params.success) {
+        sendValidationError(res, params.error);
+        return;
+    }
+
+    const clerkUserId = req.user?.clerkId;
+
+    if (!clerkUserId) {
+        res.status(401).json({ message: "Authentication required." });
+        return;
+    }
+
+    try {
+        const result = await getCaseRequest({
+            clerkUserId,
+            companyId: params.data.companyId,
+            requestId: params.data.requestId,
+        });
+
+        res.status(200).json({
+            message: "Case request retrieved successfully.",
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+
+export async function getCasesController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const params = companyResourceParamsSchema.safeParse(req.params);
+    const query = listResourcesQuerySchema.safeParse(req.query);
+
+    if (!params.success) {
+        sendValidationError(res, params.error);
+        return;
+    }
+
+    if (!query.success) {
+        sendValidationError(res, query.error);
+        return;
+    }
+
+    const clerkUserId = req.user?.clerkId;
+
+    if (!clerkUserId) {
+        res.status(401).json({ message: "Authentication required." });
+        return;
+    }
+
+    let status: CaseStatus | undefined;
+
+    if (query.data.status) {
+        const parsedStatus = Object.values(CaseStatus).find(
+            (value) => value === query.data.status,
+        );
+
+        if (!parsedStatus) {
+            res.status(400).json({ message: "Invalid case status." });
+            return;
+        }
+
+        status = parsedStatus;
+    }
+
+    try {
+        const result = await getCases({
+            clerkUserId,
+            companyId: params.data.companyId,
+            page: query.data.page,
+            limit: query.data.limit,
+            ...(query.data.search !== undefined
+                ? { search: query.data.search }
+                : {}),
+            ...(status !== undefined ? { status } : {}),
+            sortOrder: query.data.sortOrder,
+        });
+
+        res.status(200).json({
+            message: "Cases retrieved successfully.",
+            data: result.items,
+            pagination: result.pagination,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getCaseDetailsController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const params = caseDetailsParamsSchema.safeParse(req.params);
+
+    if (!params.success) {
+        sendValidationError(res, params.error);
+        return;
+    }
+
+    const clerkUserId = req.user?.clerkId;
+
+    if (!clerkUserId) {
+        res.status(401).json({ message: "Authentication required." });
+        return;
+    }
+
+    try {
+        const result = await getCaseDetails({
+            clerkUserId,
+            companyId: params.data.companyId,
+            caseId: params.data.caseId,
+        });
+
+        res.status(200).json({
+            message: "Case details retrieved successfully.",
             data: result,
         });
     } catch (error) {

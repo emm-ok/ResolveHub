@@ -10,6 +10,7 @@ router.post("/:companyId/requests",
     submitCaseRequestController);
 
 // router.get("/:companyId/requests", requireAuthentication, getCaseRequests);
+// router.get("/:companyId/requests/:requestId", requireAuthentication, getCaseRequest);
 
 router.post("/:companyId/requests/:requestId/accept", 
     // requireAuthentication, 

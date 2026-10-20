@@ -98,8 +98,10 @@ export const submitCaseRequestSchema = z
     })
     .strict();
 
+
 export const rejectCaseRequestSchema = z
     .object({
+        clerkId: z.string().min(1, "Clerk ID is required."),
         reason: z
             .string()
             .trim()
@@ -107,6 +109,7 @@ export const rejectCaseRequestSchema = z
             .max(1000, "Rejection reason cannot exceed 1000 characters."),
     })
     .strict();
+
 
 // export const companySlugParamsSchema = z.object({
 //     slug: z
@@ -120,4 +123,29 @@ export const rejectCaseRequestSchema = z
 export const requestActionParamsSchema = z.object({
     companyId: z.string().uuid(),
     requestId: z.string().uuid(),
+});
+
+
+
+// FETCH CASE-REQUEST 
+export const companyResourceParamsSchema = z.object({
+    companyId: z.string().min(1),
+});
+
+export const caseRequestParamsSchema =
+    companyResourceParamsSchema.extend({
+        requestId: z.string().min(1),
+    });
+
+export const caseDetailsParamsSchema =
+    companyResourceParamsSchema.extend({
+        caseId: z.string().min(1),
+    });
+
+export const listResourcesQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    search: z.string().trim().max(100).optional(),
+    status: z.string().trim().optional(),
+    sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });

@@ -15,6 +15,7 @@ import {
 
 import { prisma } from "../lib/prisma.js";
 import { requireCompanyPermission } from "../middleware/authorization.js";
+import z from "zod";
 
 // SUBMIT CASE REQUEST
 interface SubmitRequestOptions {
@@ -428,9 +429,17 @@ export async function rejectCaseRequest({
         permission: PermissionCode.CASE_REQUEST_REVIEW,
     });
 
-    const { reason: normalizedReason } = rejectCaseRequestSchema.parse({
-        reason: reason,
-    });
+    // const { reason: normalizedReason } = rejectCaseRequestSchema.parse({
+    //     reason,
+    // });
+
+    // TEST - Will remove later on
+    const normalizedReason = z
+        .string()
+        .trim()
+        .min(10, "Rejection reason must contain at least 10 characters.")
+        .max(1000, "Rejection reason cannot exceed 1000 characters.")
+        .parse(reason);
 
     if (
         normalizedReason.length < 5 ||
@@ -495,4 +504,244 @@ export async function rejectCaseRequest({
 
         return updatedRequest;
     });
+}
+
+
+
+
+interface ListCaseRequestsInput {
+    clerkUserId: string;
+    companyId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    status?: CaseRequestStatus;
+    sortOrder: "asc" | "desc";
+}
+
+interface GetCaseRequestInput {
+    clerkUserId: string;
+    companyId: string;
+    requestId: string;
+}
+
+export async function getCaseRequests({
+    clerkUserId,
+    companyId,
+    page,
+    limit,
+    search,
+    status,
+    sortOrder,
+}: ListCaseRequestsInput) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_REQUEST_REVIEW,
+    });
+
+    const where: Prisma.CaseRequestWhereInput = {
+        companyId,
+        deletedAt: null,
+        ...(status ? { status } : {}),
+        ...(search
+            ? {
+                OR: [
+                    { requestNumber: { contains: search, mode: "insensitive" } },
+                    { title: { contains: search, mode: "insensitive" } },
+                ],
+            }
+            : {}),
+    };
+
+    const [requests, total] = await prisma.$transaction([
+        prisma.caseRequest.findMany({
+            where,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: { createdAt: sortOrder },
+            select: {
+                id: true,
+                requestNumber: true,
+                title: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                reviewedAt: true,
+                rejectionReason: true,
+            },
+        }),
+        prisma.caseRequest.count({ where }),
+    ]);
+
+    return {
+        items: requests,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasNextPage: page * limit < total,
+            hasPreviousPage: page > 1,
+        },
+    };
+}
+
+export async function getCaseRequest({
+    clerkUserId,
+    companyId,
+    requestId,
+}: GetCaseRequestInput) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_REQUEST_REVIEW,
+    });
+
+    const request = await prisma.caseRequest.findFirst({
+        where: {
+            id: requestId,
+            companyId,
+            deletedAt: null,
+        },
+        select: {
+            id: true,
+            requestNumber: true,
+            title: true,
+            description: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            reviewedAt: true,
+            rejectionReason: true,
+            // Add customer and linked-case relations using your actual schema.
+        },
+    });
+
+    if (!request) {
+        throw new Error("Case request not found.");
+    }
+
+    return request;
+}
+
+
+
+interface ListCasesInput {
+    clerkUserId: string;
+    companyId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    status?: CaseStatus;
+    sortOrder: "asc" | "desc";
+}
+
+interface GetCaseDetailsInput {
+    clerkUserId: string;
+    companyId: string;
+    caseId: string;
+}
+
+export async function getCases({
+    clerkUserId,
+    companyId,
+    page,
+    limit,
+    search,
+    status,
+    sortOrder,
+}: ListCasesInput) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_REQUEST_REVIEW,
+    });
+
+    const where: Prisma.CaseWhereInput = {
+        companyId,
+        ...(status ? { status } : {}),
+        ...(search
+            ? {
+                OR: [
+                    { caseNumber: { contains: search, mode: "insensitive" } },
+                    { title: { contains: search, mode: "insensitive" } },
+                ],
+            }
+            : {}),
+    };
+
+    const [cases, total] = await prisma.$transaction([
+        prisma.case.findMany({
+            where,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: { createdAt: sortOrder },
+            select: {
+                id: true,
+                caseNumber: true,
+                title: true,
+                status: true,
+                priority: true,
+                createdAt: true,
+                updatedAt: true,
+                dueAt: true,
+            },
+        }),
+        prisma.case.count({ where }),
+    ]);
+
+    return {
+        items: cases,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasNextPage: page * limit < total,
+            hasPreviousPage: page > 1,
+        },
+    };
+}
+
+export async function getCaseDetails({
+    clerkUserId,
+    companyId,
+    caseId,
+}: GetCaseDetailsInput) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_REQUEST_REVIEW,
+    });
+
+    const caseRecord = await prisma.case.findFirst({
+        where: {
+            id: caseId,
+            companyId,
+        },
+        select: {
+            id: true,
+            caseNumber: true,
+            title: true,
+            description: true,
+            status: true,
+            priority: true,
+            createdAt: true,
+            updatedAt: true,
+            dueAt: true,
+
+            // Add relations below using their actual Prisma names:
+            // caseRequest: { select: { id: true, requestNumber: true, ... } },
+            // assignments: { select: { ... } },
+            // slaPolicy: { select: { ... } },
+            // activities: { select: { ... }, orderBy: { createdAt: "desc" } },
+        },
+    });
+
+    if (!caseRecord) {
+        throw new Error("Case not found.");
+    }
+
+    return caseRecord;
 }
