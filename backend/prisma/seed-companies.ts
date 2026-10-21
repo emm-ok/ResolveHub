@@ -151,11 +151,11 @@ const seedCompanyMember = async() => {
         data: {
             companyId: "6f9f0cdd-54f0-48c1-88db-ec46f9483b93",
             userId: "3c0d5845-065d-404a-8ca4-072998aac9c6",
-            roleId: "17d9f2b8-c7f7-4331-b0cd-d361a45a536d"
+            roleId: "35ce56e0-609b-45f3-801f-02505d022d92"
         }
     })
 
-    console.log("Comapny member created successfully")
+    console.log("Company member created successfully")
 }
 
 seedCompanyMember()
