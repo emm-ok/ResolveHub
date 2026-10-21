@@ -844,3 +844,118 @@ export async function getCaseActivitiesService({
         },
     };
 }
+
+
+type CloseCaseInput = {
+    clerkUserId: string;
+    companyId: string;
+    caseId: string;
+    reason?: string;
+};
+
+export async function closeCaseService({
+    clerkUserId,
+    companyId,
+    caseId,
+    reason,
+}: CloseCaseInput) {
+    const actor = await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_CLOSE,
+    });
+
+    return prisma.$transaction(async (tx) => {
+        const lockedCases = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id"
+      FROM "Case"
+      WHERE "id" = ${caseId}::uuid
+        AND "companyId" = ${companyId}::uuid
+        AND "deletedAt" IS NULL
+      FOR UPDATE
+    `;
+
+        if (lockedCases.length === 0) {
+            throw new ServiceError(404, "Case not found.");
+        }
+
+        const caseRecord = await tx.case.findUnique({
+            where: { id: caseId },
+            select: {
+                id: true,
+                caseNumber: true,
+                status: true,
+                resolvedAt: true,
+                closedAt: true,
+            },
+        });
+
+        if (!caseRecord) {
+            throw new ServiceError(404, "Case not found.");
+        }
+
+        if (caseRecord.status === CaseStatus.CLOSED) {
+            throw new ServiceError(409, "This case is already closed.");
+        }
+
+        if (caseRecord.status !== CaseStatus.RESOLVED) {
+            throw new ServiceError(
+                409,
+                "Only resolved cases can be closed.",
+            );
+        }
+
+        const now = new Date();
+
+        const updatedCase = await tx.case.update({
+            where: { id: caseId },
+            data: {
+                status: CaseStatus.CLOSED,
+                closedAt: now,
+                lastActivityAt: now,
+            },
+            select: {
+                id: true,
+                caseNumber: true,
+                status: true,
+                resolvedAt: true,
+                closedAt: true,
+                lastActivityAt: true,
+            },
+        });
+
+        await tx.caseActivity.create({
+            data: {
+                companyId,
+                caseId,
+                actorUserId: actor.userId,
+                type: CaseActivityType.STATUS_CHANGED,
+                visibility: "INTERNAL",
+                summary: "Case closed.",
+                metadata: {
+                    previousStatus: CaseStatus.RESOLVED,
+                    newStatus: CaseStatus.CLOSED,
+                    ...(reason ? { reason } : {}),
+                },
+            },
+        });
+
+        await tx.auditLog.create({
+            data: {
+                actorId: actor.userId,
+                companyId,
+                action: AuditAction.CASE_CLOSED,
+                entity: AuditEntity.CASE,
+                entityId: caseId,
+                metadata: {
+                    caseNumber: caseRecord.caseNumber,
+                    previousStatus: CaseStatus.RESOLVED,
+                    newStatus: CaseStatus.CLOSED,
+                    ...(reason ? { reason } : {}),
+                },
+            },
+        });
+
+        return updatedCase;
+    });
+}

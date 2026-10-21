@@ -8,6 +8,7 @@ import z, { ZodError } from "zod";
 
 import {
     caseParamsSchema,
+    closeCaseSchema,
 } from "../validation/case-management.js";
 
 import {
@@ -19,6 +20,8 @@ import {
     updateCaseDetailsService,
 } from "../services/case-management.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
+import { closeCaseService } from "../services/case-management.service.js";
+
 
 export function handleControllerError(
     error: unknown,
@@ -188,6 +191,32 @@ export const getCaseActivities: RequestHandler = async (
 
         res.status(200).json({
             success: true,
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const closeCase: RequestHandler = async (
+    req,
+    res,
+    next,
+) => {
+    try {
+        const { companyId, caseId } = caseParamsSchema.parse(req.params);
+        const { reason } = closeCaseSchema.parse(req.body ?? {});
+
+        const data = await closeCaseService({
+            clerkUserId: getClerkUserId(req),
+            companyId,
+            caseId,
+            ...(reason !== undefined ? { reason } : {}),
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Case closed successfully.",
             data,
         });
     } catch (error) {

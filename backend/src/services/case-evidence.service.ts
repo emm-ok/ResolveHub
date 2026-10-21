@@ -400,6 +400,7 @@ export async function deleteEvidenceService({
             throw new ServiceError(404, "Case not found.");
         }
 
+        console.log("EvidenceId", evidenceId)
         const evidence = await tx.evidence.findFirst({
             where: {
                 id: evidenceId,

@@ -1,7 +1,7 @@
 import {Router} from "express";
 import { requireAuthentication } from "../middleware/auth.middleware.js";
 import { acceptCaseRequestController, getCaseDetailsController, getCasesController, rejectCaseRequestController } from "../controllers/case-request.controller.js";
-import { assignCase, getCaseActivities, getCaseAssignments, unassignCase, updateCaseDetails } from "../controllers/case-management.controller.js";
+import { assignCase, closeCase, getCaseActivities, getCaseAssignments, unassignCase, updateCaseDetails } from "../controllers/case-management.controller.js";
 
 
 const router = Router();
@@ -33,6 +33,11 @@ router.get(
 router.get(
     "/:companyId/cases/:caseId/activities",
     getCaseActivities,
+);
+
+router.post(
+    "/:companyId/cases/:caseId/close",
+    closeCase,
 );
 
 export default router;
