@@ -1,22 +1,22 @@
 import {Router} from "express";
 import { requireAuthentication } from "../middleware/auth.middleware.js";
 import { evidenceUpload } from "../config/upload.js";
-import { uploadEvidence } from "../controllers/case-evidence.controller.js";
+import { deleteEvidence, getCaseEvidence, getEvidenceDetails, uploadEvidence } from "../controllers/case-evidence.controller.js";
 
 
 const router = Router();
 
-router.use(requireAuthentication)
+// router.use(requireAuthentication)
 
-// router.get(
-//     "/:companyId/cases/:caseId/evidence",
-//     getCaseEvidence,
-// );
+router.get(
+    "/:companyId/cases/:caseId/evidence",
+    getCaseEvidence,
+);
 
-// router.get(
-//     "/:companyId/cases/:caseId/evidence/:evidenceId",
-//     getEvidenceDetails,
-// );
+router.get(
+    "/:companyId/cases/:caseId/evidence/:evidenceId",
+    getEvidenceDetails,
+);
 
 router.post(
     "/:companyId/cases/:caseId/evidence",
@@ -24,10 +24,10 @@ router.post(
     uploadEvidence,
 );
 
-// router.delete(
-//     "/:companyId/cases/:caseId/evidence/:evidenceId",
-//     deleteEvidence,
-// );
+router.delete(
+    "/:companyId/cases/:caseId/evidence/:evidenceId",
+    deleteEvidence,
+);
 
 
 export default router;

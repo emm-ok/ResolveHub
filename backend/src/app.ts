@@ -29,13 +29,13 @@ app.use(express.urlencoded({ extended: true }));
 
 
 app.use(clerkMiddleware())
-
+const caseRoute = "/api/manage-cases"
 app.use("/api/users", userRoutes);
 app.use("/api/case-requests", caseRequestRoutes);
-app.use("/api/manage-cases", caseManagementRoutes);
-app.use("/api/case-evidence", caseEvidenceRoutes);
-app.use("/api/case-comments", caseCommentRoutes);
-app.use("/api/case-resolution", caseResolutionRoutes);
+app.use(caseRoute, caseManagementRoutes);
+app.use(caseRoute, caseEvidenceRoutes);
+app.use(caseRoute, caseCommentRoutes);
+app.use(caseRoute, caseResolutionRoutes);
 app.use("/api/companies", companyRoutes);
 
 // app.get("/users", async(req, res) => {
