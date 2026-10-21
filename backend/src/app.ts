@@ -8,6 +8,10 @@ import webhookRoutes from "./routes/webhook.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import { clerkMiddleware } from "@clerk/express";
 import caseRequestRoutes from "./routes/case-request.route.js";
+import caseManagementRoutes from "./routes/case-management.route.js";
+import caseEvidenceRoutes from "./routes/case-evidence.route.js";
+import caseCommentRoutes from "./routes/case-comment.route.js";
+import caseResolutionRoutes from "./routes/case-resolution.route.js";
 import companyRoutes from "./routes/company.route.js";
 import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler.js";
 
@@ -28,6 +32,10 @@ app.use(clerkMiddleware())
 
 app.use("/api/users", userRoutes);
 app.use("/api/case-requests", caseRequestRoutes);
+app.use("/api/manage-cases", caseManagementRoutes);
+app.use("/api/case-evidence", caseEvidenceRoutes);
+app.use("/api/case-comments", caseCommentRoutes);
+app.use("/api/case-resolution", caseResolutionRoutes);
 app.use("/api/companies", companyRoutes);
 
 // app.get("/users", async(req, res) => {

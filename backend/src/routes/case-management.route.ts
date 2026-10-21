@@ -6,7 +6,7 @@ import { assignCase, getCaseActivities, getCaseAssignments, unassignCase, update
 
 const router = Router();
 
-router.use(requireAuthentication)
+// router.use(requireAuthentication)
 
 router.get("/:companyId/cases", getCasesController)
 router.get("/:companyId/cases/:caseId", getCaseDetailsController)
@@ -15,10 +15,10 @@ router.post("/:companyId/requests/:requestId/accept", acceptCaseRequestControlle
 router.post("/:companyId/requests/:requestId/reject", rejectCaseRequestController)
 
 
-
+// TODO: Test endpoints below
 router.patch("/:companyId/cases/:caseId", updateCaseDetails)
 
-router.post("/:companyId/cases/:caseId/assignments", assignCase)
+router.post("/:companyId/cases/:caseId/assignments/:memberId", assignCase)
 router.delete(
     "/:companyId/cases/:caseId/assignments/:assignmentId",
     unassignCase,

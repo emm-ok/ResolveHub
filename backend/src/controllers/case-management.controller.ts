@@ -81,13 +81,18 @@ export const assignCase: RequestHandler = async (
     res,
     next,
 ) => {
+    const assignParamsSchema = caseParamsSchema.extend({
+        memberId: z.string().uuid(),
+    });
+
     try {
-        const { companyId, caseId } = caseParamsSchema.parse(req.params);
+        const { companyId, caseId, memberId } = assignParamsSchema.parse(req.params);
 
         const result = await assignCaseService({
             clerkUserId: getClerkUserId(req),
             companyId,
             caseId,
+            memberId,
             input: req.body,
         });
 

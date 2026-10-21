@@ -360,11 +360,16 @@ export async function updateCaseDetailsService(
 // --------------------------------------------------
 // POST /:companyId/cases/:caseId/assignments
 // --------------------------------------------------
-
+type AssignInput = {
+    clerkUserId: string;
+    companyId: string;
+    caseId: string;
+    memberId: string
+}
 export async function assignCaseService(
-    args: CommonInput & { input: unknown },
+    args: AssignInput & { input: unknown },
 ) {
-    const { clerkUserId, companyId, caseId } = args;
+    const { clerkUserId, companyId, caseId, memberId } = args;
     const input = assignCaseSchema.parse(args.input);
 
     const actor = await requireCompanyPermission({
@@ -378,7 +383,7 @@ export async function assignCaseService(
 
         const assignee = await tx.companyMember.findFirst({
             where: {
-                id: input.memberId,
+                id: memberId,
                 companyId,
                 status: MembershipStatus.ACTIVE,
             },
@@ -398,6 +403,8 @@ export async function assignCaseService(
                 },
             },
         });
+
+        console.log("Assignee", assignee)
 
         if (!assignee || assignee.role.companyId !== companyId) {
             throw new ServiceError(

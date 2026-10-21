@@ -1,7 +1,7 @@
 import {Router} from "express";
 import { requireAuthentication } from "../middleware/auth.middleware.js";
 import { evidenceUpload } from "../config/upload.js";
-import { uploadEvidence } from "../controllers/case-evidence-resolution.controller.js";
+import { uploadEvidence } from "../controllers/case-evidence.controller.js";
 
 
 const router = Router();

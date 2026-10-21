@@ -1,6 +1,6 @@
 import {Router} from "express";
 import { requireAuthentication } from "../middleware/auth.middleware.js";
-import { proposeResolution } from "../controllers/case-evidence-resolution.controller.js";
+import { proposeResolution } from "../controllers/case-resolution.controller.js";
 
 
 const router = Router();

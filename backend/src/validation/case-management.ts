@@ -27,7 +27,6 @@ export const updateCaseDetailsSchema = z
 
 export const assignCaseSchema = z.object({
     // This is the Company's CompanyMember.id, not the user's Clerk ID.
-    memberId: z.string().uuid(),
     note: z.string().trim().max(1000).optional(),
 });
 
