@@ -275,6 +275,7 @@ export async function acceptCaseRequest({
                 },
 
                 data: {
+                    caseId: newCase.id,
                     status: CaseRequestStatus.ACCEPTED,
                     reviewedByMemberId: actor.membershipId,
                     reviewedAt: now,
@@ -598,7 +599,8 @@ export async function getCaseRequest({
         permission: PermissionCode.CASE_REQUEST_REVIEW,
     });
 
-    const request = await prisma.caseRequest.findFirst({
+    let request
+    request = await prisma.caseRequest.findFirst({
         where: {
             id: requestId,
             companyId,
@@ -620,6 +622,31 @@ export async function getCaseRequest({
 
     if (!request) {
         throw new Error("Case request not found.");
+    }
+
+    if (request.status === CaseRequestStatus.SUBMITTED) {
+        request = await prisma.caseRequest.update({
+            where: {
+                id: requestId,
+                companyId,
+                deletedAt: null
+            },
+            data: {
+                status: CaseRequestStatus.UNDER_REVIEW,
+            },
+            select: {
+                id: true,
+                requestNumber: true,
+                title: true,
+                description: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                reviewedAt: true,
+                rejectionReason: true,
+                // Add customer and linked-case relations using your actual schema.
+            },
+        })
     }
 
     return request;

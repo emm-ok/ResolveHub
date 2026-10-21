@@ -22,6 +22,7 @@ router.post("/:companyId/requests/:requestId/reject", rejectCaseRequestControlle
 router.get("/:companyId/cases", getCasesController)
 router.get("/:companyId/cases/:caseId", getCaseDetailsController)
 
+// TODO: Test this endpoints later
 router.patch("/:companyId/cases/:caseId", updateCaseDetails)
 
 router.post("/:companyId/cases/:caseId/assignments", assignCase)
