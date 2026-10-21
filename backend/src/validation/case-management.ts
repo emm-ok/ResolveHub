@@ -46,3 +46,14 @@ export const proposeResolutionSchema = z.object({
     details: z.string().trim().min(10).max(10000).optional(),
 });
 
+export const resolutionParamsSchema = caseParamsSchema.extend({
+    resolutionId: z.string().uuid(),
+});
+
+export const resolutionDecisionSchema = z.object({
+    reason: z.string().trim().min(3).max(1000).optional(),
+});
+
+export const closeCaseSchema = z.object({
+    reason: z.string().trim().min(3).max(1000).optional(),
+});

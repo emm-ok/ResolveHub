@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CaseActivityType" ADD VALUE 'RESOLUTION_WITHDRAWN';
