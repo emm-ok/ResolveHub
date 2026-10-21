@@ -4,7 +4,7 @@ import type {
     NextFunction,
     RequestHandler,
 } from "express";
-import { ZodError } from "zod";
+import z, { ZodError } from "zod";
 
 import {
     caseParamsSchema,
@@ -13,7 +13,10 @@ import {
 import {
     assignCaseService,
     createCommentService,
+    getCaseActivitiesService,
+    getCaseAssignmentsService,
     ServiceError,
+    unassignCaseService,
     updateCaseDetailsService,
 } from "../services/case-management.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
@@ -123,5 +126,93 @@ export const createComment: RequestHandler = async (
         });
     } catch (error) {
         handleControllerError(error, res, next);
+    }
+};
+
+
+const assignmentParamsSchema = caseParamsSchema.extend({
+    assignmentId: z.string().uuid(),
+});
+
+const activityQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const unassignCase: RequestHandler = async (
+    req,
+    res,
+    next,
+) => {
+    try {
+        const { companyId, caseId, assignmentId } =
+            assignmentParamsSchema.parse(req.params);
+
+        const data = await unassignCaseService({
+            clerkUserId: getClerkUserId(req),
+            companyId,
+            caseId,
+            assignmentId,
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Case assignment removed successfully.",
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getCaseAssignments: RequestHandler = async (
+    req,
+    res,
+    next,
+) => {
+    try {
+        const { companyId, caseId } =
+            caseParamsSchema.parse(req.params);
+
+        const data = await getCaseAssignmentsService({
+            clerkUserId: getClerkUserId(req),
+            companyId,
+            caseId,
+        });
+
+        res.status(200).json({
+            success: true,
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getCaseActivities: RequestHandler = async (
+    req,
+    res,
+    next,
+) => {
+    try {
+        const { companyId, caseId } =
+            caseParamsSchema.parse(req.params);
+
+        const { page, limit } = activityQuerySchema.parse(req.query);
+
+        const data = await getCaseActivitiesService({
+            clerkUserId: getClerkUserId(req),
+            companyId,
+            caseId,
+            page,
+            limit,
+        });
+
+        res.status(200).json({
+            success: true,
+            data,
+        });
+    } catch (error) {
+        next(error);
     }
 };

@@ -657,3 +657,295 @@ export async function createCommentService(
         return comment;
     });
 }
+
+
+
+type CompanyCaseInput = {
+    clerkUserId: string;
+    companyId: string;
+    caseId: string;
+};
+
+type UnassignCaseInput = CompanyCaseInput & {
+    assignmentId: string;
+};
+
+async function ensureCaseExists(
+    companyId: string,
+    caseId: string,
+) {
+    const caseRecord = await prisma.case.findFirst({
+        where: {
+            id: caseId,
+            companyId,
+            deletedAt: null,
+        },
+        select: { id: true },
+    });
+
+    if (!caseRecord) {
+        throw new ServiceError(404, "Case not found.");
+    }
+
+    return caseRecord;
+}
+
+/**
+ * End an active assignment without deleting its history.
+ */
+export async function unassignCaseService({
+    clerkUserId,
+    companyId,
+    caseId,
+    assignmentId,
+}: UnassignCaseInput) {
+    const actor = await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_ASSIGN,
+    });
+
+    return prisma.$transaction(async (tx) => {
+        // Serialize assignment changes for this case.
+        const lockedCase = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id"
+      FROM "Case"
+      WHERE "id" = ${caseId}::uuid
+        AND "companyId" = ${companyId}::uuid
+        AND "deletedAt" IS NULL
+      FOR UPDATE
+    `;
+
+        if (lockedCase.length === 0) {
+            throw new ServiceError(404, "Case not found.");
+        }
+
+        const assignment = await tx.caseAssignment.findFirst({
+            where: {
+                id: assignmentId,
+                caseId,
+                unassignedAt: null,
+                member: {
+                    companyId,
+                },
+            },
+            select: {
+                id: true,
+                memberId: true,
+            },
+        });
+
+        if (!assignment) {
+            throw new ServiceError(
+                404,
+                "Active case assignment not found.",
+            );
+        }
+
+        const unassignedAt = new Date();
+
+        await tx.caseAssignment.update({
+            where: { id: assignment.id },
+            data: { unassignedAt },
+        });
+
+        await tx.caseActivity.create({
+            data: {
+                companyId,
+                caseId,
+                actorUserId: actor.userId,
+                type: CaseActivityType.UNASSIGNED,
+                visibility: "INTERNAL",
+                summary: "Case assignment removed.",
+                metadata: {
+                    assignmentId: assignment.id,
+                    memberId: assignment.memberId,
+                },
+            },
+        });
+
+        await tx.auditLog.create({
+            data: {
+                actorId: actor.userId,
+                companyId,
+                action: AuditAction.CASE_UNASSIGNED,
+                entity: AuditEntity.CASE_ASSIGNMENT,
+                entityId: assignment.id,
+                metadata: {
+                    caseId,
+                    memberId: assignment.memberId,
+                },
+            },
+        });
+
+        await tx.case.update({
+            where: { id: caseId },
+            data: { lastActivityAt: unassignedAt },
+        });
+
+        // Return only the data needed to update the frontend.
+        return {
+            id: assignment.id,
+            caseId,
+            memberId: assignment.memberId,
+            unassignedAt,
+        };
+    });
+}
+
+/**
+ * List current and historical assignments for a case.
+ */
+export async function getCaseAssignmentsService({
+    clerkUserId,
+    companyId,
+    caseId,
+}: CompanyCaseInput) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_READ,
+    });
+
+    await ensureCaseExists(companyId, caseId);
+
+    const assignments = await prisma.caseAssignment.findMany({
+        where: { caseId },
+        orderBy: { assignedAt: "desc" },
+        select: {
+            id: true,
+            assignedAt: true,
+            unassignedAt: true,
+            note: true,
+            member: {
+                select: {
+                    id: true,
+                    role: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            avatarUrl: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    return assignments.map((assignment) => ({
+        id: assignment.id,
+        assignedAt: assignment.assignedAt,
+        unassignedAt: assignment.unassignedAt,
+        note: assignment.note,
+        member: {
+            id: assignment.member.id,
+            name: assignment.member.user.name,
+            avatarUrl: assignment.member.user.avatarUrl,
+            role: assignment.member.role.name,
+        },
+    }));
+}
+
+/**
+ * Get a paginated case activity timeline.
+ */
+export async function getCaseActivitiesService({
+    clerkUserId,
+    companyId,
+    caseId,
+    page = 1,
+    limit = 20,
+}: CompanyCaseInput & {
+    page?: number;
+    limit?: number;
+}) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_READ,
+    });
+
+    await ensureCaseExists(companyId, caseId);
+
+    const skip = (page - 1) * limit;
+
+    const [activities, total] = await prisma.$transaction([
+        prisma.caseActivity.findMany({
+            where: {
+                companyId,
+                caseId,
+            },
+            orderBy: [
+                { createdAt: "desc" },
+                { id: "desc" },
+            ],
+            skip,
+            take: limit,
+            select: {
+                id: true,
+                type: true,
+                visibility: true,
+                summary: true,
+                metadata: true,
+                createdAt: true,
+                actorUserId: true,
+            },
+        }),
+
+        prisma.caseActivity.count({
+            where: {
+                companyId,
+                caseId,
+            },
+        }),
+    ]);
+
+    // Batch-fetch actor details instead of querying once per activity.
+    const actorIds = [
+        ...new Set(
+            activities
+                .map((activity) => activity.actorUserId)
+                .filter((id): id is string => id !== null),
+        ),
+    ];
+
+    const actors = actorIds.length
+        ? await prisma.user.findMany({
+            where: { id: { in: actorIds } },
+            select: {
+                id: true,
+                name: true,
+                avatarUrl: true,
+            },
+        })
+        : [];
+
+    const actorById = new Map(
+        actors.map((actor) => [actor.id, actor]),
+    );
+
+    return {
+        items: activities.map((activity) => ({
+            id: activity.id,
+            type: activity.type,
+            visibility: activity.visibility,
+            summary: activity.summary,
+            metadata: activity.metadata,
+            createdAt: activity.createdAt,
+            actor: activity.actorUserId
+                ? actorById.get(activity.actorUserId) ?? null
+                : null,
+        })),
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+}
