@@ -21,7 +21,7 @@ import {
 } from "../services/case-management.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
 
-function handleControllerError(
+export function handleControllerError(
     error: unknown,
     res: Response,
     next: NextFunction,
@@ -102,32 +102,6 @@ export const assignCase: RequestHandler = async (
                 ? "Case is already assigned to this member."
                 : "Case assigned successfully.",
             data: result,
-        });
-    } catch (error) {
-        handleControllerError(error, res, next);
-    }
-};
-
-// POST /:companyId/cases/:caseId/comments
-export const createComment: RequestHandler = async (
-    req,
-    res,
-    next,
-) => {
-    try {
-        const { companyId, caseId } = caseParamsSchema.parse(req.params);
-
-        const comment = await createCommentService({
-            clerkUserId: getClerkUserId(req),
-            companyId,
-            caseId,
-            input: req.body,
-        });
-
-        res.status(201).json({
-            success: true,
-            message: "Comment created successfully.",
-            data: comment,
         });
     } catch (error) {
         handleControllerError(error, res, next);

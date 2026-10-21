@@ -30,13 +30,13 @@ export class ServiceError extends Error {
     }
 }
 
-type CommonInput = {
+export type CommonInput = {
     clerkUserId: string;
     companyId: string;
     caseId: string;
 };
 
-async function lockAndGetCase(
+export async function lockAndGetCase(
     tx: Prisma.TransactionClient,
     companyId: string,
     caseId: string,
@@ -553,118 +553,6 @@ export async function assignCaseService(
         };
     });
 }
-
-// --------------------------------------------------
-// POST /:companyId/cases/:caseId/comments
-// --------------------------------------------------
-
-export async function createCommentService(
-    args: CommonInput & { input: unknown },
-) {
-    const { clerkUserId, companyId, caseId } = args;
-    const input = createCommentSchema.parse(args.input);
-
-    const actor = await requireCompanyPermission({
-        clerkUserId,
-        companyId,
-        permission: PermissionCode.COMMENT_CREATE,
-    });
-
-    return prisma.$transaction(async (tx) => {
-        const existingCase = await lockAndGetCase(tx, companyId, caseId);
-
-        const author = await tx.user.findUnique({
-            where: { id: actor.userId },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                status: true,
-            },
-        });
-
-        if (!author || author.status !== UserStatus.ACTIVE) {
-            throw new ServiceError(401, "Active user profile not found.");
-        }
-
-        const now = new Date();
-
-        const comment = await tx.caseComment.create({
-            data: {
-                caseId,
-                authorUserId: author.id,
-                authorName: author.name,
-                authorEmail: author.email,
-                body: input.body,
-                visibility: input.visibility,
-            },
-        });
-
-        const activityVisibility =
-            input.visibility === CommentVisibility.REQUESTER_VISIBLE
-                ? ActivityVisibility.REQUESTER_VISIBLE
-                : ActivityVisibility.INTERNAL;
-
-        // Keep the body out of the timeline metadata and audit log.
-        await tx.caseActivity.create({
-            data: {
-                companyId,
-                caseId,
-                actorUserId: author.id,
-                type: CaseActivityType.COMMENT_ADDED,
-                visibility: activityVisibility,
-                summary:
-                    input.visibility === CommentVisibility.REQUESTER_VISIBLE
-                        ? "Requester-visible comment added"
-                        : "Internal comment added",
-                metadata: {
-                    commentId: comment.id,
-                    visibility: input.visibility,
-                },
-            },
-        });
-
-        await tx.auditLog.create({
-            data: {
-                actorId: author.id,
-                companyId,
-                action: AuditAction.COMMENT_CREATED,
-                entity: AuditEntity.CASE_COMMENT,
-                entityId: comment.id,
-                metadata: {
-                    caseId,
-                    visibility: input.visibility,
-                },
-            },
-        });
-
-        await tx.case.update({
-            where: { id: caseId },
-            data: { lastActivityAt: now },
-        });
-
-        // Only notify a registered requester when the comment is visible to them.
-        if (
-            input.visibility === CommentVisibility.REQUESTER_VISIBLE &&
-            existingCase.requesterUserId &&
-            existingCase.requesterUserId !== author.id
-        ) {
-            await tx.notification.create({
-                data: {
-                    userId: existingCase.requesterUserId,
-                    companyId,
-                    type: NotificationType.NEW_COMMENT,
-                    title: "New update on your case",
-                    body: `A new update was added to case ${existingCase.caseNumber}.`,
-                    actionUrl: `/my-cases/${caseId}`,
-                },
-            });
-        }
-
-        return comment;
-    });
-}
-
 
 
 type CompanyCaseInput = {
