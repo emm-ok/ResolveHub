@@ -12,7 +12,6 @@ import {
 
 import {
     assignCaseService,
-    createCommentService,
     getCaseActivitiesService,
     getCaseAssignmentsService,
     ServiceError,
