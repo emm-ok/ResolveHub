@@ -36,6 +36,21 @@ export async function sendCompanyInvitationService({
         permission: PermissionCode.MEMBER_INVITE,
     });
 
+    const inviter = await prisma.user.findFirst({
+        where: {
+            id: actor.userId,
+        },
+        select: {
+            name: true,
+        }
+    })
+
+    if(!inviter) {
+        throw new ServiceError(404, "Inviter not found")
+    }
+
+    console.log("inviter", inviter)
+
     const email = input.email.trim().toLowerCase();
     const now = new Date();
 
@@ -224,6 +239,7 @@ export async function sendCompanyInvitationService({
             roleName: role.name,
             invitationUrl,
             expiresAt,
+            inviterName: inviter.name ?? "Inviter",
         });
     } catch {
         // Avoid leaving a pending invitation that the recipient never received.
