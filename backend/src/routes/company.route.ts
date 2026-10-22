@@ -7,6 +7,7 @@ import {
     updateCompanyController,
     deactivateCompanyController,
 } from "../controllers/company.controller.js";
+import { sendCompanyInvitationController } from "../controllers/company-invitation.controller.js";
 
 const router = Router();
 
@@ -16,6 +17,8 @@ router.post("/", createCompanyController);
 
 // List the authenticated user's active company memberships.
 router.get("/", getCompaniesController);
+
+router.post("/:companyId/invitations", sendCompanyInvitationController,);
 
 // Read company settings.
 router.get("/:companyId", getCompanyController);
