@@ -3,7 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import {
     invitationParamsSchema,
     sendCompanyInvitationSchema,
-} from "../validators/company-invitation.js";
+} from "../validation/company-invitation.js";
 import { sendCompanyInvitationService } from "../services/company-invitation.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
 
