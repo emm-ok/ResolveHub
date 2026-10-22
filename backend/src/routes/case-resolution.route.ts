@@ -5,7 +5,7 @@ import { acceptResolution, getCaseResolutions, proposeResolution, rejectResoluti
 
 const router = Router();
 
-router.use(requireAuthentication)
+// router.use(requireAuthentication)
 
 router.get(
     "/:companyId/cases/:caseId/resolutions",

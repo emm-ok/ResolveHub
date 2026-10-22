@@ -13,6 +13,7 @@ import caseEvidenceRoutes from "./routes/case-evidence.route.js";
 import caseCommentRoutes from "./routes/case-comment.route.js";
 import caseResolutionRoutes from "./routes/case-resolution.route.js";
 import companyRoutes from "./routes/company.route.js";
+import companyAdminRouter from "./routes/company-admin.route.js";
 import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler.js";
 
 const app: Application = express();
@@ -37,6 +38,7 @@ app.use(caseRoute, caseEvidenceRoutes);
 app.use(caseRoute, caseCommentRoutes);
 app.use(caseRoute, caseResolutionRoutes);
 app.use("/api/companies", companyRoutes);
+app.use("/api/admin", companyAdminRouter);
 
 // app.get("/users", async(req, res) => {
 //     const users = await prisma.user.findMany();

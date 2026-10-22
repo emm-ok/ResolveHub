@@ -74,3 +74,45 @@ export const createCompanySchema = z
     .strict();
 
 export type CreateCompanyInput = z.infer<typeof createCompanySchema>;
+
+
+export const companyIdParamsSchema = z.object({
+    companyId: z.string().uuid("Invalid company ID."),
+});
+
+export const updateCompanySchema = z
+    .object({
+        clerkUserId: z.string(),
+        name: z.string().trim().min(2).max(150).optional(),
+        slug: z
+            .string()
+            .trim()
+            .min(2)
+            .max(100)
+            .regex(
+                /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+                "Slug must contain lowercase letters, numbers, and hyphens.",
+            )
+            .optional(),
+        email: z.string().trim().email().max(254).nullable().optional(),
+        phone: z.string().trim().max(30).nullable().optional(),
+        website: z.string().trim().url().max(2048).nullable().optional(),
+        logoUrl: z.string().trim().url().max(2048).nullable().optional(),
+        description: z.string().trim().max(2000).nullable().optional(),
+        address: z.string().trim().max(300).nullable().optional(),
+        city: z.string().trim().max(100).nullable().optional(),
+        state: z.string().trim().max(100).nullable().optional(),
+        country: z.string().trim().max(100).nullable().optional(),
+        timezone: z.string().trim().min(1).max(100).optional(),
+        publicIntakeEnabled: z.boolean().optional(),
+    })
+    .strict()
+    .refine((data) => Object.keys(data).length > 0, {
+        message: "Provide at least one field to update.",
+    });
+
+export const deactivateCompanySchema = z.object({
+    reason: z.string().trim().min(3).max(1000).optional(),
+});
+
+export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;

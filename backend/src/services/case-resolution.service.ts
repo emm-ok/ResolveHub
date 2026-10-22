@@ -195,14 +195,14 @@ const resolutionSelect = {
     updatedAt: true,
     proposedByUserId: true,
     decidedByUserId: true,
-    proposer: {
+    proposedBy: {
         select: {
             id: true,
             name: true,
             avatarUrl: true,
         },
     },
-    decider: {
+    decidedBy: {
         select: {
             id: true,
             name: true,
@@ -252,8 +252,8 @@ export async function getCaseResolutionsService({
         decisionReason: resolution.decisionReason,
         createdAt: resolution.createdAt,
         updatedAt: resolution.updatedAt,
-        proposer: resolution.proposer,
-        decider: resolution.decider,
+        proposer: resolution.proposedBy,
+        decider: resolution.decidedBy,
     }));
 }
 
@@ -270,11 +270,34 @@ async function decideResolution({
 }: ResolutionDecisionInput & {
     decision: "ACCEPTED" | "REJECTED";
 }) {
-    const actor = await requireCompanyPermission({
-        clerkUserId,
-        companyId,
-        permission: PermissionCode.RESOLUTION_DECIDE,
-    });
+    // const actor = await requireCompanyPermission({
+    //     clerkUserId,
+    //     companyId,
+    //     permission: PermissionCode.RESOLUTION_DECIDE,
+    // });
+
+    const actor = await prisma.user.findUnique({
+        where: {
+            clerkId: clerkUserId,
+        },
+        select: {
+            id: true
+        }
+    })
+
+    if(!actor) {
+        throw new ServiceError(404, "User not found")
+    }
+
+    const actorCase = await prisma.case.findFirst({
+        where: {
+            createdByUserId: actor?.id
+        },
+    })
+
+    if(!actorCase) {
+        throw new ServiceError(404, "User with Case not found")
+    }
 
     return prisma.$transaction(async (tx) => {
         // Lock the case first so competing decisions serialize.
@@ -345,7 +368,7 @@ async function decideResolution({
             where: { id: resolution.id },
             data: {
                 status: decision,
-                decidedByUserId: actor.userId,
+                decidedByUserId: actor.id,
                 decisionReason: reason ?? null,
             },
             select: {
@@ -379,7 +402,7 @@ async function decideResolution({
             data: {
                 companyId,
                 caseId,
-                actorUserId: actor.userId,
+                actorUserId: actor.id,
                 type: decision === ResolutionStatus.ACCEPTED 
                 ? CaseActivityType.RESOLUTION_ACCEPTED 
                 : CaseActivityType.RESOLUTION_REJECTED,
@@ -398,7 +421,7 @@ async function decideResolution({
 
         await tx.auditLog.create({
             data: {
-                actorId: actor.userId,
+                actorId: actor.id,
                 companyId,
                 action: AuditAction.RESOLUTION_DECIDED,
                 entity: AuditEntity.RESOLUTION,

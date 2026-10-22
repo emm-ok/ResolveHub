@@ -1,8 +1,11 @@
-import { AuditAction, AuditEntity, MembershipStatus, UserStatus } from "@prisma/client";
+import { AuditAction, AuditEntity, CompanyStatus, MembershipStatus, PermissionCode, UserStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
-import { createCompanySchema } from "../validation/company.js";
+import { createCompanySchema, type UpdateCompanyInput } from "../validation/company.js";
 import { seedCompanyRoles } from "./company-role.service.js";
 import { seedCompanySLAPolicies } from "./sla-policy.service.js";
+import { ServiceError } from "./case-management.service.js";
+import { requireCompanyPermission } from "../middleware/authorization.js";
+
 
 export class CompanyServiceError extends Error {
     constructor(
@@ -140,5 +143,307 @@ export async function createCompany(
             company,
             membership,
         };
+    });
+}
+
+type CompanyActorInput = {
+    clerkUserId: string;
+    companyId: string;
+};
+
+/**
+ * List companies the authenticated user actively belongs to.
+ * No company-specific permission is required because this endpoint
+ * determines which companies the user can access in the first place.
+ */
+export async function getCompaniesService(
+    clerkUserId: string,
+) {
+    const user = await prisma.user.findUnique({
+        where: { clerkId: clerkUserId },
+        select: {
+            id: true,
+            status: true,
+        },
+    });
+
+    if (!user || user.status !== UserStatus.ACTIVE) {
+        throw new ServiceError(401, "Authentication required.");
+    }
+
+    const memberships = await prisma.companyMember.findMany({
+        where: {
+            userId: user.id,
+            status: MembershipStatus.ACTIVE,
+            company: {
+                status: CompanyStatus.ACTIVE,
+                deletedAt: null,
+            },
+        },
+        orderBy: {
+            company: {
+                name: "asc",
+            },
+        },
+        select: {
+            id: true,
+            role: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    systemRole: true,
+                },
+            },
+            company: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    logoUrl: true,
+                    description: true,
+                    timezone: true,
+                    status: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+            },
+        },
+    });
+
+    return memberships.map(({ id, role, company }) => ({
+        membershipId: id,
+        role,
+        company,
+    }));
+}
+
+/**
+ * Get a single company's settings.
+ */
+export async function getCompanyService({
+    clerkUserId,
+    companyId,
+}: CompanyActorInput) {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.COMPANY_SETTINGS_READ,
+    });
+
+    const company = await prisma.company.findFirst({
+        where: {
+            id: companyId,
+            status: CompanyStatus.ACTIVE,
+            deletedAt: null,
+        },
+        select: {
+            id: true,
+            name: true,
+            slug: true,
+            email: true,
+            phone: true,
+            website: true,
+            logoUrl: true,
+            description: true,
+            address: true,
+            city: true,
+            state: true,
+            country: true,
+            timezone: true,
+            publicIntakeEnabled: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+        },
+    });
+
+    if (!company) {
+        throw new ServiceError(404, "Company not found.");
+    }
+
+    return company;
+}
+
+/**
+ * Update company settings and write an audit record atomically.
+ */
+export async function updateCompanyService({
+    clerkUserId,
+    companyId,
+    input,
+}: CompanyActorInput & {
+    input: UpdateCompanyInput;
+}) {
+    const actor = await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.COMPANY_SETTINGS_UPDATE,
+    });
+
+    return prisma.$transaction(async (tx) => {
+        const existing = await tx.company.findFirst({
+            where: {
+                id: companyId,
+                status: CompanyStatus.ACTIVE,
+                deletedAt: null,
+            },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+            },
+        });
+
+        if (!existing) {
+            throw new ServiceError(404, "Company not found.");
+        }
+
+        if (input.slug && input.slug !== existing.slug) {
+            const slugExists = await tx.company.findFirst({
+                where: {
+                    slug: input.slug,
+                    id: { not: companyId },
+                },
+                select: { id: true },
+            });
+
+            if (slugExists) {
+                throw new ServiceError(
+                    409,
+                    "This company slug is already in use.",
+                );
+            }
+        }
+
+        const updatedCompany = await tx.company.update({
+            where: { id: companyId },
+            data: {
+                ...(input.name !== undefined && { name: input.name }),
+                ...(input.slug !== undefined && { slug: input.slug }),
+                ...(input.email !== undefined && { email: input.email }),
+                ...(input.phone !== undefined && { phone: input.phone }),
+                ...(input.website !== undefined && { website: input.website }),
+                ...(input.logoUrl !== undefined && { logoUrl: input.logoUrl }),
+                ...(input.description !== undefined && { description: input.description }),
+                ...(input.address !== undefined && { address: input.address }),
+                ...(input.city !== undefined && { city: input.city }),
+                ...(input.state !== undefined && { state: input.state }),
+                ...(input.country !== undefined && { country: input.country }),
+                ...(input.timezone !== undefined && { timezone: input.timezone }),
+                ...(input.publicIntakeEnabled !== undefined && {
+                    publicIntakeEnabled: input.publicIntakeEnabled,
+                }),
+            },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                email: true,
+                phone: true,
+                website: true,
+                logoUrl: true,
+                description: true,
+                address: true,
+                city: true,
+                state: true,
+                country: true,
+                timezone: true,
+                publicIntakeEnabled: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
+        await tx.auditLog.create({
+            data: {
+                actorId: actor.userId,
+                companyId,
+                action: AuditAction.UPDATE,
+                entity: AuditEntity.COMPANY,
+                entityId: companyId,
+                metadata: {
+                    changedFields: Object.keys(input),
+                    previousName: existing.name,
+                    previousSlug: existing.slug,
+                    updatedName: updatedCompany.name,
+                    updatedSlug: updatedCompany.slug,
+                },
+            },
+        });
+
+        return updatedCompany;
+    });
+}
+
+/**
+ * Deactivate a company without permanently deleting its records.
+ */
+export async function deactivateCompanyService({
+    clerkUserId,
+    companyId,
+    reason,
+}: CompanyActorInput & {
+    reason?: string;
+}) {
+    const actor = await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.COMPANY_SETTINGS_UPDATE,
+    });
+
+    return prisma.$transaction(async (tx) => {
+        // Lock the company row so concurrent deactivation attempts
+        // cannot both proceed as if the company were still active.
+        const lockedCompanies = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT "id"
+      FROM "Company"
+      WHERE "id" = ${companyId}::uuid
+        AND "status" = 'ACTIVE'
+        AND "deletedAt" IS NULL
+      FOR UPDATE
+    `;
+
+        if (lockedCompanies.length === 0) {
+            throw new ServiceError(
+                404,
+                "Company not found or already deactivated.",
+            );
+        }
+
+        const now = new Date();
+
+        const company = await tx.company.update({
+            where: { id: companyId },
+            data: {
+                status: CompanyStatus.DEACTIVATED,
+                deletedAt: now,
+            },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                status: true,
+                deletedAt: true,
+                updatedAt: true,
+            },
+        });
+
+        await tx.auditLog.create({
+            data: {
+                actorId: actor.userId,
+                companyId,
+                action: AuditAction.DELETE,
+                entity: AuditEntity.COMPANY,
+                entityId: companyId,
+                metadata: {
+                    operation: "COMPANY_DEACTIVATED",
+                    reason: reason ?? null,
+                },
+            },
+        });
+
+        return company;
     });
 }
