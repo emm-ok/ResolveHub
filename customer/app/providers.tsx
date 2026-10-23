@@ -6,7 +6,7 @@ import {
     QueryClient,
     QueryClientProvider,
 } from "@tanstack/react-query";
-import { setAccessTokenGetter } from "@/lib/api";
+import { setAccessTokenGetter } from "@/lib/api/axios";
 
 function ClerkApiTokenBridge() {
     const { getToken } = useAuth();

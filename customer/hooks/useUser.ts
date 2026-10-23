@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api/axios";
 import type { CurrentUser } from "@/types/user";
 
 export function useCurrentUser(enabled = true) {
