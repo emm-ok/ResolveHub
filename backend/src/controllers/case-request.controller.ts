@@ -16,6 +16,7 @@ import {
     caseRequestParamsSchema,
     listResourcesQuerySchema,
     caseDetailsParamsSchema,
+    myCaseRequestParamsSchema,
 } from "../validation/case-request.schema.js";
 
 import {
@@ -26,7 +27,10 @@ import {
     getCaseRequest,
     getCases,
     getCaseDetails,
+    getMyCaseRequests,
+    getMyCaseRequest,
 } from "../services/case-request.service.js";
+import { getClerkUserId } from "../middleware/auth.middleware.js";
 
 function sendValidationError(res: Response, error: {
     issues: Array<{ path: PropertyKey[]; message: string }>;
@@ -61,7 +65,7 @@ export async function submitCaseRequestController(
             res.status(404).json({ message: "Company not found." });
             return;
         }
-        const { clerkId } = req.body;
+        const clerkId = getClerkUserId(req)
         // Never trust companyId or channel supplied by the customer.
         const parsedBody = submitCaseRequestSchema.safeParse({
             ...req.body,
@@ -167,6 +171,100 @@ export async function rejectCaseRequestController(
 
 
 
+export async function getMyCaseRequestsController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const query = listResourcesQuerySchema.safeParse(req.query);
+
+    if (!query.success) {
+        sendValidationError(res, query.error);
+        return;
+    }
+
+    const clerkUserId = getClerkUserId(req)
+
+    // const { clerkUserId } = req.body
+
+    if (!clerkUserId) {
+        res.status(401).json({ message: "Authentication required." });
+        return;
+    }
+
+    let status: CaseRequestStatus | undefined;
+
+    if (query.data.status) {
+        const parsedStatus = Object.values(CaseRequestStatus).find(
+            (value) => value === query.data.status,
+        );
+
+        if (!parsedStatus) {
+            res.status(400).json({ message: "Invalid case request status." });
+            return;
+        }
+
+        status = parsedStatus;
+    }
+
+    try {
+        const result = await getMyCaseRequests({
+            clerkUserId,
+            page: query.data.page,
+            limit: query.data.limit,
+            ...(query.data.search !== undefined
+                ? { search: query.data.search }
+                : {}),
+            ...(status !== undefined ? { status } : {}),
+            sortOrder: query.data.sortOrder,
+        });
+
+        res.status(200).json({
+            message: "Case requests retrieved successfully.",
+            data: result.items,
+            pagination: result.pagination,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getMyCaseRequestController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    const params = myCaseRequestParamsSchema.safeParse(req.params);
+
+    if (!params.success) {
+        sendValidationError(res, params.error);
+        return;
+    }
+
+    const clerkUserId = getClerkUserId(req)
+
+    // const { clerkUserId } = req.body
+
+    if (!clerkUserId) {
+        res.status(401).json({ message: "Authentication required." });
+        return;
+    }
+
+    try {
+        const result = await getMyCaseRequest({
+            clerkUserId,
+            requestId: params.data.requestId,
+        });
+
+        res.status(200).json({
+            message: "Case request retrieved successfully.",
+            data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 export async function getCaseRequestsController(
     req: Request,
     res: Response,
@@ -185,9 +283,9 @@ export async function getCaseRequestsController(
         return;
     }
 
-    // const clerkUserId = req.user?.clerkId;
+    const clerkUserId = getClerkUserId(req)
 
-    const { clerkUserId } = req.body
+    // const { clerkUserId } = req.body
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });

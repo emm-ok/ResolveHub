@@ -16,6 +16,7 @@ import {
 import { prisma } from "../lib/prisma.js";
 import { requireCompanyPermission } from "../middleware/authorization.js";
 import z from "zod";
+import { ServiceError } from "./case-management.service.js";
 
 // SUBMIT CASE REQUEST
 interface SubmitRequestOptions {
@@ -520,10 +521,135 @@ interface ListCaseRequestsInput {
     sortOrder: "asc" | "desc";
 }
 
+interface ListMyCaseRequestsInput {
+    clerkUserId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    status?: CaseRequestStatus;
+    sortOrder: "asc" | "desc";
+}
+
 interface GetCaseRequestInput {
     clerkUserId: string;
     companyId: string;
     requestId: string;
+}
+interface GetMyCaseRequestInput {
+    clerkUserId: string;
+    requestId: string;
+}
+export async function getMyCaseRequests({
+    clerkUserId,
+    page,
+    limit,
+    search,
+    status,
+    sortOrder,
+}: ListMyCaseRequestsInput) {
+
+    const user = await prisma.user.findUnique({
+        where: {
+            clerkId: clerkUserId,
+        },
+        select: {
+            id:  true,
+        }
+    })
+
+    if(!user) {
+        throw new ServiceError(404, "User not found")
+    }
+
+    const where: Prisma.CaseRequestWhereInput = {
+        submitterUserId: user.id,
+        deletedAt: null,
+        ...(status ? { status } : {}),
+        ...(search
+            ? {
+                OR: [
+                    { requestNumber: { contains: search, mode: "insensitive" } },
+                    { title: { contains: search, mode: "insensitive" } },
+                ],
+            }
+            : {}),
+    };
+
+    const [requests, total] = await prisma.$transaction([
+        prisma.caseRequest.findMany({
+            where,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: { createdAt: sortOrder },
+            select: {
+                id: true,
+                requestNumber: true,
+                title: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                reviewedAt: true,
+                rejectionReason: true,
+            },
+        }),
+        prisma.caseRequest.count({ where }),
+    ]);
+
+    return {
+        items: requests,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            hasNextPage: page * limit < total,
+            hasPreviousPage: page > 1,
+        },
+    };
+}
+
+export async function getMyCaseRequest({
+    clerkUserId,
+    requestId,
+}: GetMyCaseRequestInput) {
+    const user = await prisma.user.findUnique({
+        where: {
+            clerkId: clerkUserId,
+        },
+        select: {
+            id: true,
+        }
+    })
+
+    if (!user) {
+        throw new ServiceError(404, "User not found")
+    }
+    
+    const request = await prisma.caseRequest.findFirst({
+        where: {
+            id: requestId,
+            submitterUserId: user.id,
+            deletedAt: null,
+        },
+        select: {
+            id: true,
+            requestNumber: true,
+            title: true,
+            description: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            reviewedAt: true,
+            rejectionReason: true,
+            // Add customer and linked-case relations using your actual schema.
+        },
+    });
+
+    if (!request) {
+        throw new ServiceError(404, "Case request not found.");
+    }
+
+    return request;
 }
 
 export async function getCaseRequests({
