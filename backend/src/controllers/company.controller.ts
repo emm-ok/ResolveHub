@@ -5,7 +5,7 @@ import type {
 } from "express";
 
 import { createCompanySchema } from "../validation/company.js";
-import { createCompany as createCompanyService } from "../services/company.service.js";
+import { createCompany as createCompanyService, getAllCompanies as getAllCompaniesService } from "../services/company.service.js";
 import {
     companyIdParamsSchema,
     deactivateCompanySchema,
@@ -19,6 +19,7 @@ import {
     updateCompanyService,
 } from "../services/company.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
+import z from "zod";
 
 export async function createCompanyController(
     req: Request,
@@ -48,6 +49,34 @@ export async function createCompanyController(
         res.status(201).json({
             message: "Company created successfully.",
             data: result,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+const allCompaniesQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    search: z.string().trim().max(150).optional(),
+});
+
+export async function getAllCompanies(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) {
+    try {
+        const query = allCompaniesQuerySchema.parse(req.query);
+
+        const result = await getAllCompaniesService({
+            ...query,
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: result.items,
+            pagination: result.pagination,
         });
     } catch (error) {
         next(error);

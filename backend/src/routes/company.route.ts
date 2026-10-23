@@ -6,6 +6,7 @@ import {
     getCompanyController,
     updateCompanyController,
     deactivateCompanyController,
+    getAllCompanies,
 } from "../controllers/company.controller.js";
 import { acceptCompanyInvitationController, getCompanyInvitationController, getCompanyInvitationsController, sendCompanyInvitationController } from "../controllers/company-invitation.controller.js";
 import {
@@ -19,6 +20,9 @@ const router = Router();
 // router.use(requireAuthentication)
 // Existing endpoint — retain its current validation and behavior.
 router.post("/", createCompanyController);
+
+// List all active companies
+router.get("/all-companies", getAllCompanies)
 
 // List the authenticated user's active company memberships.
 router.get("/", getCompaniesController);

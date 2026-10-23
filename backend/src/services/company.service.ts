@@ -5,6 +5,7 @@ import { seedCompanyRoles } from "./company-role.service.js";
 import { seedCompanySLAPolicies } from "./sla-policy.service.js";
 import { ServiceError } from "./case-management.service.js";
 import { requireCompanyPermission } from "../middleware/authorization.js";
+import z from "zod";
 
 
 export class CompanyServiceError extends Error {
@@ -145,6 +146,68 @@ export async function createCompany(
         };
     });
 }
+
+const allCompaniesQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+    search: z.string().trim().max(150).optional(),
+});
+
+export type AllCompaniesQuery = z.infer<typeof allCompaniesQuerySchema>;
+
+export async function getAllCompanies({
+    page,
+    limit,
+    search,
+}: AllCompaniesQuery) {
+
+    const where = {
+        status: CompanyStatus.ACTIVE,
+        ...(search
+            ? {
+                OR: [
+                    { name: { contains: search, mode: "insensitive" as const } },
+                    { slug: { contains: search, mode: "insensitive" as const } },
+                    { email: { contains: search, mode: "insensitive" as const } },
+                ],
+            }
+            : {}),
+    };
+
+    const [companies, total] = await prisma.$transaction([
+        prisma.company.findMany({
+            where,
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: { createdAt: "desc" },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                logoUrl: true,
+                status: true,
+            },
+        }),
+        prisma.company.count({ where }),
+    ]);
+
+    return {
+        items: companies.map((company) => ({
+            id: company.id,
+            name: company.name,
+            slug: company.slug,
+            logoUrl: company.logoUrl,
+            status: company.status,
+        })),
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
+}
+
 
 type CompanyActorInput = {
     clerkUserId: string;
