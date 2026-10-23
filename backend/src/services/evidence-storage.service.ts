@@ -1,6 +1,10 @@
 
 import { randomUUID } from "node:crypto";
 import cloudinary from "../config/cloudinary.js";
+import {
+    StorageProvider,
+} from "@prisma/client";
+import { ServiceError } from "./case-management.service.js";
 
 type CloudinaryResourceType = "image" | "video" | "raw";
 
@@ -83,3 +87,75 @@ export async function deleteEvidenceFile(
         throw new Error("Could not clean up uploaded evidence.");
     }
 }
+
+
+const DOWNLOAD_URL_TTL_SECONDS = 5 * 60;
+
+function getCloudinaryResourceType(mimeType: string): "image" | "raw" {
+    return mimeType.startsWith("image/") ? "image" : "raw";
+}
+
+export async function createEvidenceDownloadUrl({
+    storageProvider,
+    storageKey,
+    mimeType,
+    originalFilename,
+}: {
+    storageProvider: StorageProvider;
+    storageKey: string;
+    mimeType: string;
+    originalFilename: string;
+}): Promise<{ url: string; expiresAt: Date }> {
+    if (storageProvider !== StorageProvider.CLOUDINARY) {
+        throw new ServiceError(
+            501,
+            "Secure downloads are not configured for this storage provider.",
+        );
+    }
+
+    const expiresAt = new Date(
+        Date.now() + DOWNLOAD_URL_TTL_SECONDS * 1000,
+    );
+
+    // Cloudinary private download URLs require the asset to have been
+    // uploaded using a compatible private/authenticated delivery type.
+    const url = cloudinary.utils.private_download_url(
+        storageKey,
+        undefined,
+        {
+            resource_type: getCloudinaryResourceType(mimeType),
+            type: "authenticated",
+            expires_at: Math.floor(expiresAt.getTime() / 1000),
+            attachment: originalFilename,
+        },
+    );
+
+    return { url, expiresAt };
+}
+
+// export async function deleteStoredEvidence({
+//     storageProvider,
+//     storageKey,
+//     mimeType,
+// }: {
+//     storageProvider: StorageProvider;
+//     storageKey: string;
+//     mimeType: string;
+// }): Promise<void> {
+//     if (storageProvider !== StorageProvider.CLOUDINARY) {
+//         throw new ServiceError(
+//             501,
+//             "Evidence deletion is not configured for this storage provider.",
+//         );
+//     }
+
+//     const result = await cloudinary.uploader.destroy(storageKey, {
+//         resource_type: getCloudinaryResourceType(mimeType),
+//         type: "authenticated",
+//         invalidate: true,
+//     });
+
+//     if (result.result !== "ok" && result.result !== "not found") {
+//         throw new ServiceError(502, "Unable to delete the stored evidence.");
+//     }
+// }

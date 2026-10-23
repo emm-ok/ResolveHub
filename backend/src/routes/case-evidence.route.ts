@@ -1,7 +1,14 @@
 import {Router} from "express";
 import { requireAuthentication } from "../middleware/auth.middleware.js";
 import { evidenceUpload } from "../config/upload.js";
-import { deleteEvidence, getCaseEvidence, getEvidenceDetails, uploadEvidence } from "../controllers/case-evidence.controller.js";
+import { 
+    // deleteCaseEvidenceController, 
+    deleteEvidence, 
+    downloadCaseEvidenceController, 
+    getCaseEvidence, 
+    getEvidenceDetails, 
+    uploadEvidence 
+} from "../controllers/case-evidence.controller.js";
 
 
 const router = Router();
@@ -28,6 +35,17 @@ router.delete(
     "/:companyId/cases/:caseId/evidence/:evidenceId",
     deleteEvidence,
 );
+
+
+router.get(
+    "/:companyId/cases/:caseId/evidence/:evidenceId/download",
+    downloadCaseEvidenceController,
+);
+
+// router.delete(
+//     "/:companyId/cases/:caseId/evidence/:evidenceId",
+//     deleteCaseEvidenceController,
+// );
 
 
 export default router;

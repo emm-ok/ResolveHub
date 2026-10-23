@@ -7,6 +7,7 @@ import {
     AuditAction,
     AuditEntity,
     CaseActivityType,
+    CompanyStatus,
     PermissionCode,
     StorageProvider,
 } from "@prisma/client";
@@ -15,13 +16,15 @@ import { prisma } from "../lib/prisma.js";
 import { requireCompanyPermission } from "../middleware/authorization.js";
 import { ServiceError } from "./case-management.service.js";
 import {
-    proposeResolutionSchema,
     uploadEvidenceSchema,
 } from "../validation/case-management.js";
 import {
     deleteEvidenceFile,
     storeEvidenceFile,
+    createEvidenceDownloadUrl,
+    // deleteStoredEvidence,
 } from "./evidence-storage.service.js";
+    
 
 type CaseActionInput = {
     clerkUserId: string;
@@ -478,3 +481,183 @@ export async function deleteEvidenceService({
         deletedAt: deletedEvidence.deletedAt,
     };
 }
+
+
+export async function downloadCaseEvidenceService({
+    clerkUserId,
+    companyId,
+    caseId,
+    evidenceId,
+}: {
+    clerkUserId: string;
+    companyId: string;
+    caseId: string;
+    evidenceId: string;
+}) {
+    const actor = await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: "EVIDENCE_READ" as PermissionCode,
+    });
+
+    const evidence = await prisma.evidence.findFirst({
+        where: {
+            id: evidenceId,
+            companyId,
+            caseId,
+            case: {
+                companyId,
+                deletedAt: null,
+                company: {
+                    status: CompanyStatus.ACTIVE,
+                    deletedAt: null,
+                },
+            },
+        },
+        select: {
+            id: true,
+            originalFilename: true,
+            storageKey: true,
+            storageProvider: true,
+            mimeType: true,
+            sizeBytes: true,
+            visibility: true,
+        },
+    });
+
+    if (!evidence) {
+        throw new ServiceError(404, "Evidence not found.");
+    }
+
+    const { url, expiresAt } = await createEvidenceDownloadUrl({
+        storageProvider: evidence.storageProvider,
+        storageKey: evidence.storageKey,
+        mimeType: evidence.mimeType,
+        originalFilename: evidence.originalFilename,
+    });
+
+    // Audit after the URL has been successfully issued.
+    await prisma.auditLog.create({
+        data: {
+            actorId: actor.userId,
+            companyId,
+            action: AuditAction.EVIDENCE_DOWNLOADED,
+            entity: AuditEntity.EVIDENCE,
+            entityId: evidence.id,
+            metadata: {
+                caseId,
+                expiresAt: expiresAt.toISOString(),
+            },
+        },
+    });
+
+    return {
+        evidence: {
+            id: evidence.id,
+            filename: evidence.originalFilename,
+            mimeType: evidence.mimeType,
+            sizeBytes: evidence.sizeBytes,
+            visibility: evidence.visibility,
+        },
+        download: {
+            url,
+            expiresAt,
+        },
+    };
+}
+
+// export async function deleteCaseEvidenceService({
+//     clerkUserId,
+//     companyId,
+//     caseId,
+//     evidenceId,
+// }: {
+//     clerkUserId: string;
+//     companyId: string;
+//     caseId: string;
+//     evidenceId: string;
+// }) {
+//     const actor = await requireCompanyPermission({
+//         clerkUserId,
+//         companyId,
+//         permission: PermissionCode.EVIDENCE_DELETE,
+//     });
+
+//     const evidence = await prisma.evidence.findFirst({
+//         where: {
+//             id: evidenceId,
+//             companyId,
+//             caseId,
+//             case: {
+//                 companyId,
+//                 deletedAt: null,
+//                 company: {
+//                     status: CompanyStatus.ACTIVE,
+//                     deletedAt: null,
+//                 },
+//             },
+//         },
+//         select: {
+//             id: true,
+//             originalFilename: true,
+//             storageKey: true,
+//             storageProvider: true,
+//             mimeType: true,
+//             caseId: true,
+//             companyId: true,
+//         },
+//     });
+
+//     if (!evidence) {
+//         throw new ServiceError(404, "Evidence not found.");
+//     }
+
+//     // Delete remote content first. If the provider fails, preserve the
+//     // database record so the operation can be retried.
+//     await deleteStoredEvidence({
+//         storageProvider: evidence.storageProvider,
+//         storageKey: evidence.storageKey,
+//         mimeType: evidence.mimeType,
+//     });
+
+//     await prisma.$transaction(async (tx) => {
+//         // Recheck ownership before removing the record.
+//         const currentEvidence = await tx.evidence.findFirst({
+//             where: {
+//                 id: evidence.id,
+//                 companyId,
+//                 caseId,
+//             },
+//             select: { id: true },
+//         });
+
+//         if (!currentEvidence) {
+//             throw new ServiceError(404, "Evidence record no longer exists.");
+//         }
+
+//         await tx.evidence.delete({
+//             where: { id: currentEvidence.id },
+//         });
+
+//         await tx.auditLog.create({
+//             data: {
+//                 actorId: actor.userId,
+//                 companyId,
+//                 action: AuditAction.DELETE,
+//                 entity: AuditEntity.EVIDENCE,
+//                 entityId: evidence.id,
+//                 metadata: {
+//                     caseId,
+//                     filename: evidence.originalFilename,
+//                     storageProvider: evidence.storageProvider,
+//                 },
+//             },
+//         });
+//     });
+
+//     return {
+//         id: evidence.id,
+//         caseId,
+//         deleted: true,
+//     };
+// }

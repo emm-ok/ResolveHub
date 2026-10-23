@@ -1,5 +1,5 @@
 
-import type { RequestHandler } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
 import { caseParamsSchema } from "../validation/case-management.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
@@ -10,6 +10,13 @@ import {
     deleteEvidenceService,
 } from "../services/case-evidence.service.js";
 import z from "zod";
+import {
+    companyEvidenceParamsSchema,
+} from "../validation/company-reporting.js";
+import {
+    // deleteCaseEvidenceService,
+    downloadCaseEvidenceService,
+} from "../services/case-evidence.service.js";
 
 // POST /:companyId/cases/:caseId/evidence
 export const uploadEvidence: RequestHandler = async (
@@ -125,3 +132,68 @@ export const deleteEvidence: RequestHandler = async (
         next(error);
     }
 };
+
+
+export async function downloadCaseEvidenceController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+) {
+    try {
+        const params = companyEvidenceParamsSchema.safeParse(req.params);
+
+        if (!params.success) {
+            res.status(400).json({
+                success: false,
+                message: "Invalid evidence download parameters.",
+                errors: params.error.flatten(),
+            });
+            return;
+        }
+
+        const data = await downloadCaseEvidenceService({
+            clerkUserId: getClerkUserId(req),
+            ...params.data,
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Secure evidence download URL generated.",
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+// export async function deleteCaseEvidenceController(
+//     req: Request,
+//     res: Response,
+//     next: NextFunction,
+// ) {
+//     try {
+//         const params = companyEvidenceParamsSchema.safeParse(req.params);
+
+//         if (!params.success) {
+//             res.status(400).json({
+//                 success: false,
+//                 message: "Invalid evidence deletion parameters.",
+//                 errors: params.error.flatten(),
+//             });
+//             return;
+//         }
+
+//         const data = await deleteCaseEvidenceService({
+//             clerkUserId: getClerkUserId(req),
+//             ...params.data,
+//         });
+
+//         res.status(200).json({
+//             success: true,
+//             message: "Evidence deleted successfully.",
+//             data,
+//         });
+//     } catch (error) {
+//         next(error);
+//     }
+// }
