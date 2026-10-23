@@ -121,12 +121,14 @@ export async function createEvidenceDownloadUrl({
     // uploaded using a compatible private/authenticated delivery type.
     const url = cloudinary.utils.private_download_url(
         storageKey,
-        undefined,
+        originalFilename.includes(".")
+            ? originalFilename.split(".").pop()!
+            : "",
         {
             resource_type: getCloudinaryResourceType(mimeType),
             type: "authenticated",
             expires_at: Math.floor(expiresAt.getTime() / 1000),
-            attachment: originalFilename,
+            attachment: true,
         },
     );
 
