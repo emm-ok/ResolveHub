@@ -2,6 +2,7 @@
 import { ClerkProvider ,useAuth } from "@clerk/clerk-react";
 import { Navigate, Route, Routes } from "react-router";
 import CompanySignInPage from "./pages/CompanySignInPage";
+import { clerkAppearance } from "./config/clerk";
 
 function DashboardGate() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -55,7 +56,7 @@ export default function App() {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider publishableKey={publishableKey} appearance={clerkAppearance}>
       <AppRoutes />
     </ClerkProvider>
   );
