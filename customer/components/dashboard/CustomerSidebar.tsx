@@ -153,7 +153,7 @@ export function CustomerSidebar({
                     </p>
 
                     <Link
-                        href="/companies"
+                        href="/dashboard/companies"
                         onClick={onClose}
                         className="mt-3 inline-flex items-center text-xs font-semibold text-indigo-600 transition-colors hover:text-indigo-800"
                     >

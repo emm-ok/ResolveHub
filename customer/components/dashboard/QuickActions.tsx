@@ -10,14 +10,14 @@ const actions = [
     {
         title: "Submit a request",
         description: "Find a company and explain how they can help.",
-        href: "/companies",
+        href: "/dashboard/companies",
         icon: FileText,
         iconStyle: "bg-indigo-50 text-indigo-600",
     },
     {
         title: "Browse companies",
         description: "Explore companies available on ResolveHub.",
-        href: "/companies",
+        href: "/dashboard/companies",
         icon: Building2,
         iconStyle: "bg-emerald-50 text-emerald-600",
     },

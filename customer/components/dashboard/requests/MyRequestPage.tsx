@@ -206,7 +206,7 @@ export function MyRequestsPage() {
                                 </button>
                             ) : (
                                 <Link
-                                    href="/companies"
+                                    href="/dashbaord/companies"
                                     className="mt-5 inline-flex h-10 items-center gap-2 rounded-xl bg-slate-950 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                                 >
                                     Browse companies

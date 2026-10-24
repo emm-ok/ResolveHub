@@ -40,7 +40,7 @@ export function DashboardWelcome({
 
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                     <Link
-                        href="/companies"
+                        href="/dashboard/companies"
                         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 transition-all hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                     >
                         <Building2 size={17} />

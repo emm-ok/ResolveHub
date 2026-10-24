@@ -38,7 +38,7 @@ export function RecentRequestsPanel() {
                 </p>
 
                 <Link
-                    href="/companies"
+                    href="/dashboard/companies"
                     className="mt-5 inline-flex min-h-10 items-center justify-center rounded-xl bg-slate-950 px-4 text-xs font-semibold text-white transition-colors hover:bg-slate-800"
                 >
                     Submit a request

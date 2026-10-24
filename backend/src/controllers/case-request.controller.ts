@@ -344,7 +344,7 @@ export async function getCaseRequestController(
 
     // const clerkUserId = req.user?.clerkId;
 
-    const { clerkUserId } = req.body
+    const clerkUserId = getClerkUserId(req)
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });

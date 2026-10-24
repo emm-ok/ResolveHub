@@ -8,6 +8,7 @@ import {
   UserButton,
   useAuth,
 } from "@clerk/nextjs";
+import { Headset } from "lucide-react";
 
 const navItems = [
   { label: "Platform", href: "#platform" },
@@ -56,7 +57,9 @@ export function Navbar() {
                 shadow-sm
               "
             >
-              <ResolveHubMark />
+              <span className="flex size-10 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm transition-transform group-hover:scale-[1.04]">
+                <Headset size={21} strokeWidth={2.2} />
+              </span>
             </motion.div>
 
             <span className="text-[17px] font-semibold tracking-[-0.03em] text-neutral-950">
@@ -114,7 +117,7 @@ export function Navbar() {
               <>
                 <SignInButton
                   mode="modal"
-                  fallbackRedirectUrl="/"
+                  fallbackRedirectUrl="/dashboard"
                 >
                   <motion.button
                     whileHover={{ y: -1 }}
@@ -135,7 +138,7 @@ export function Navbar() {
 
                 <SignUpButton
                   mode="modal"
-                  fallbackRedirectUrl="/"
+                  fallbackRedirectUrl="/dashboard"
                 >
                   <motion.button
                     whileHover={{ y: -1 }}
@@ -161,31 +164,5 @@ export function Navbar() {
         </motion.nav>
       </div>
     </header>
-  );
-}
-
-function ResolveHubMark() {
-  return (
-    <svg
-      width="19"
-      height="19"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M7 12.5L10.2 15.7L17.5 8.5"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-    </svg>
   );
 }

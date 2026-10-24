@@ -1,21 +1,23 @@
+
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
+  Activity,
   ArrowRight,
+  CheckCircle2,
   ClipboardList,
-  Search,
-  UserRoundCheck,
+  Clock3,
+  FileSearch,
+  History,
+  LockKeyhole,
   Microscope,
   Paperclip,
+  Search,
   ShieldCheck,
-  CheckCircle2,
-  History,
-  Clock3,
-  LockKeyhole,
-  FileSearch,
-  Activity,
+  UserRoundCheck,
 } from "lucide-react";
+import type { ElementType } from "react";
 
 const workflow = [
   {
@@ -90,162 +92,132 @@ const workflow = [
     color: "bg-neutral-100 text-neutral-700",
     outcome: "There is a reliable history of what happened.",
   },
-];
+] as const;
+
+type WorkflowItemData = (typeof workflow)[number];
+
+const metrics = [
+  { icon: UserRoundCheck, label: "Ownership" },
+  { icon: Clock3, label: "SLA tracking" },
+  { icon: FileSearch, label: "Evidence" },
+  { icon: History, label: "Audit history" },
+] as const;
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function ComplaintToResolution() {
+  const reduceMotion = useReducedMotion();
+
   return (
     <section
       id="how-it-works"
-      className="relative overflow-hidden bg-white py-28 sm:py-32 lg:py-40"
+      className="relative isolate overflow-hidden bg-white py-20 sm:py-28 lg:py-36"
     >
-      {/* Background */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-20 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-neutral-100/70 blur-3xl" />
+      {/* Decorative background */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      >
+        <div className="absolute left-1/2 top-16 h-[360px] w-[min(700px,100vw)] -translate-x-1/2 rounded-full bg-neutral-100/70 blur-3xl sm:h-[500px]" />
 
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Section heading */}
-        <SectionHeading />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <SectionHeading reduceMotion={reduceMotion} />
 
-        {/* Workflow */}
-        <WorkflowTimeline />
+        <WorkflowTimeline reduceMotion={reduceMotion} />
 
-        {/* Bottom value statement */}
-        <ValueStatement />
+        <ValueStatement reduceMotion={reduceMotion} />
       </div>
     </section>
   );
 }
 
-
-function SectionHeading() {
+function SectionHeading({
+  reduceMotion,
+}: {
+  reduceMotion: boolean | null;
+}) {
   return (
     <div className="mx-auto max-w-3xl text-center">
       <motion.div
-        initial={{ opacity: 0, y: 12 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.5 }}
-        transition={{ duration: 0.5 }}
-        className="
-          mb-5 inline-flex items-center gap-2
-          rounded-full
-          border border-neutral-200
-          bg-neutral-50
-          px-3.5 py-1.5
-          text-xs font-medium
-          text-neutral-500
-        "
+        transition={{ duration: reduceMotion ? 0 : 0.4, ease }}
+        className="mb-5 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-1.5 text-xs font-medium text-neutral-500"
       >
-        <Activity size={13} />
-
+        <Activity size={13} aria-hidden="true" />
         From report to resolution
       </motion.div>
 
       <motion.h2
-        initial={{ opacity: 0, y: 18 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.5 }}
         transition={{
-          duration: 0.65,
-          delay: 0.05,
-          ease: [0.22, 1, 0.36, 1],
+          duration: reduceMotion ? 0 : 0.5,
+          delay: reduceMotion ? 0 : 0.04,
+          ease,
         }}
-        className="
-          text-balance
-          text-4xl
-          font-semibold
-          tracking-[-0.045em]
-          text-neutral-950
-          sm:text-5xl
-          lg:text-6xl
-        "
+        className="text-balance text-3xl font-semibold tracking-[-0.045em] text-neutral-950 sm:text-5xl lg:text-6xl"
       >
         From complaint to
         <span className="text-neutral-400"> resolution.</span>
       </motion.h2>
 
       <motion.p
-        initial={{ opacity: 0, y: 15 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.5 }}
         transition={{
-          duration: 0.6,
-          delay: 0.12,
+          duration: reduceMotion ? 0 : 0.45,
+          delay: reduceMotion ? 0 : 0.08,
+          ease,
         }}
-        className="
-          mx-auto mt-6
-          max-w-2xl
-          text-base
-          leading-7
-          text-neutral-500
-          sm:text-lg
-          sm:leading-8
-        "
+        className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-neutral-500 sm:mt-6 sm:text-lg sm:leading-8"
       >
-        ResolveHub turns fragmented complaints into structured,
-        accountable workflows — giving your team a clear path from
-        intake to investigation, resolution, and audit.
+        ResolveHub turns fragmented complaints into structured, accountable
+        workflows — giving your team a clear path from intake to investigation,
+        resolution, and audit.
       </motion.p>
     </div>
   );
 }
 
-
-
-function WorkflowTimeline() {
+function WorkflowTimeline({
+  reduceMotion,
+}: {
+  reduceMotion: boolean | null;
+}) {
   return (
-    <div className="relative mx-auto mt-20 max-w-6xl">
-      {/* Desktop central line */}
+    <div className="relative mx-auto mt-14 max-w-6xl sm:mt-20 lg:mt-24">
+      {/* Desktop timeline track */}
       <div
-        className="
-          pointer-events-none
-          absolute
-          left-1/2
-          top-8
-          hidden
-          h-[calc(100%-4rem)]
-          w-px
-          -translate-x-1/2
-          bg-gradient-to-b
-          from-neutral-200
-          via-neutral-300
-          to-neutral-200
-          lg:block
-        "
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-8 left-1/2 top-8 hidden w-px -translate-x-1/2 bg-neutral-200 lg:block"
       />
 
-      {/* Animated progress line */}
-      <motion.div
-        initial={{ scaleY: 0 }}
-        whileInView={{ scaleY: 1 }}
-        viewport={{ once: true, amount: 0.1 }}
-        transition={{
-          duration: 1.8,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        style={{ originY: 0 }}
-        className="
-          pointer-events-none
-          absolute
-          left-1/2
-          top-8
-          hidden
-          h-[calc(100%-4rem)]
-          w-px
-          -translate-x-1/2
-          bg-neutral-950
-          lg:block
-        "
-      />
+      {!reduceMotion && (
+        <motion.div
+          aria-hidden="true"
+          initial={{ scaleY: 0 }}
+          whileInView={{ scaleY: 1 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 1.2, ease }}
+          style={{ originY: 0 }}
+          className="pointer-events-none absolute bottom-8 left-1/2 top-8 hidden w-px -translate-x-1/2 bg-neutral-900 lg:block"
+        />
+      )}
 
-      <div className="space-y-8 lg:space-y-0">
+      <div className="space-y-5 sm:space-y-6 lg:space-y-0">
         {workflow.map((item, index) => (
-          <WorkflowItem
+          <WorkflowStep
             key={item.number}
             item={item}
             index={index}
+            reduceMotion={reduceMotion}
           />
         ))}
       </div>
@@ -253,259 +225,160 @@ function WorkflowTimeline() {
   );
 }
 
-
-function WorkflowItem({
+function WorkflowStep({
   item,
   index,
+  reduceMotion,
 }: {
-  item: (typeof workflow)[number];
+  item: WorkflowItemData;
   index: number;
+  reduceMotion: boolean | null;
 }) {
-  const Icon = item.icon;
   const isLeft = index % 2 === 0;
 
   return (
-    <motion.div
-      initial={{
-        opacity: 0,
-        x: isLeft ? -25 : 25,
-      }}
-      whileInView={{
-        opacity: 1,
-        x: 0,
-      }}
-      viewport={{
-        once: true,
-        amount: 0.25,
-      }}
+    <motion.article
+      initial={
+        reduceMotion
+          ? false
+          : { opacity: 0, y: 10 }
+      }
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
       transition={{
-        duration: 0.65,
-        delay: index * 0.04,
-        ease: [0.22, 1, 0.36, 1],
+        duration: reduceMotion ? 0 : 0.45,
+        delay: reduceMotion ? 0 : Math.min(index * 0.035, 0.2),
+        ease,
       }}
-      className="
-        relative
-        lg:grid
-        lg:grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)]
-        lg:items-center
-      "
+      className="relative grid min-w-0 grid-cols-1 items-center lg:min-h-[210px] lg:grid-cols-[minmax(0,1fr)_80px_minmax(0,1fr)]"
     >
-      {/* LEFT COLUMN */}
+      {/* 
+        Exactly one card is rendered.
+        Mobile: full-width single column.
+        Desktop: alternate between the left and right columns.
+      */}
       <div
-        className={`
-          min-w-0
-          ${isLeft ? "lg:pr-12" : ""}
-        `}
+        className={[
+          "min-w-0",
+          isLeft
+            ? "lg:col-start-1 lg:row-start-1 lg:pr-12"
+            : "lg:col-start-3 lg:row-start-1 lg:pl-12",
+        ].join(" ")}
       >
-        {isLeft ? (
-          <WorkflowCard
-            item={item}
-            Icon={Icon}
-            align="right"
-          />
-        ) : null}
-      </div>
-
-      {/* CENTER COLUMN */}
-      <div className="relative z-10 hidden justify-center lg:flex">
-        <WorkflowNode number={item.number} />
-      </div>
-
-      {/* RIGHT COLUMN */}
-      <div
-        className={`
-          min-w-0
-          ${!isLeft ? "lg:pl-12" : ""}
-        `}
-      >
-        {!isLeft ? (
-          <WorkflowCard
-            item={item}
-            Icon={Icon}
-            align="left"
-          />
-        ) : null}
-      </div>
-
-      {/* MOBILE */}
-      <div className="mt-6 lg:hidden">
         <WorkflowCard
           item={item}
-          Icon={Icon}
-          align="left"
-          mobile
+          reduceMotion={reduceMotion}
         />
       </div>
-    </motion.div>
+
+      {/* Desktop center node */}
+      <div className="relative z-10 hidden items-center justify-center lg:col-start-2 lg:row-start-1 lg:flex">
+        <WorkflowNode
+          number={item.number}
+          reduceMotion={reduceMotion}
+        />
+      </div>
+    </motion.article>
   );
 }
+
 function WorkflowNode({
   number,
+  reduceMotion,
 }: {
   number: string;
+  reduceMotion: boolean | null;
 }) {
   return (
     <motion.div
-      whileHover={{
-        scale: 1.08,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 400,
-        damping: 20,
-      }}
-      className="
-        flex h-14 w-14
-        items-center justify-center
-        rounded-full
-        border
-        border-neutral-200
-        bg-white
-        shadow-[0_4px_20px_rgba(0,0,0,0.06)]
-      "
+      whileHover={reduceMotion ? undefined : { scale: 1.04 }}
+      transition={{ duration: 0.18 }}
+      className="flex size-14 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
     >
-      <div
-        className="
-          flex h-9 w-9
-          items-center justify-center
-          rounded-full
-          bg-neutral-950
-          text-[10px]
-          font-semibold
-          tracking-wide
-          text-white
-        "
-      >
+      <span className="flex size-9 items-center justify-center rounded-full bg-neutral-950 text-[10px] font-semibold tracking-wide text-white">
         {number}
-      </div>
+      </span>
     </motion.div>
   );
 }
 
 function WorkflowCard({
   item,
-  Icon,
-  align,
-  mobile = false,
+  reduceMotion,
 }: {
-  item: (typeof workflow)[number];
-  Icon: React.ElementType;
-  align: "left" | "right";
-  mobile?: boolean;
+  item: WorkflowItemData;
+  reduceMotion: boolean | null;
 }) {
+  const Icon = item.icon;
+
   return (
     <motion.div
-      whileHover={{
-        y: -4,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 350,
-        damping: 25,
-      }}
-      className={`
-        group
-        w-full
-        max-w-[500px]
-        rounded-2xl
-        border border-neutral-200
-        bg-white
-        p-5
-        shadow-[0_8px_30px_rgba(0,0,0,0.035)]
-        transition-shadow
-        hover:shadow-[0_16px_45px_rgba(0,0,0,0.08)]
-        sm:p-6
-        ${mobile ? "ml-0" : ""}
-      `}
+      whileHover={reduceMotion ? undefined : { y: -2 }}
+      transition={{ duration: 0.18, ease }}
+      className="group w-full min-w-0 rounded-2xl border border-neutral-200/90 bg-white p-4 shadow-[0_5px_22px_rgba(0,0,0,0.025)] transition-shadow duration-300 hover:shadow-[0_12px_35px_rgba(0,0,0,0.065)] sm:p-6"
     >
-     <div className="flex items-start gap-4">
-  <motion.div
-    whileHover={{ scale: 1.05 }}
-    className={`
-      flex h-11 w-11
-      shrink-0
-      items-center justify-center
-      rounded-xl
-      ${item.color}
-    `}
-  >
-    <Icon size={19} strokeWidth={1.8} />
-  </motion.div>
+      <div className="flex min-w-0 items-start gap-3.5 sm:gap-4">
+        <div
+          className={`flex size-10 shrink-0 items-center justify-center rounded-xl sm:size-11 ${item.color}`}
+        >
+          <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+        </div>
 
-  <div className="min-w-0 flex-1">
-    <span className="text-[10px] font-semibold tracking-[0.14em] text-neutral-400">
-      STEP {item.number}
-    </span>
+        <div className="min-w-0 flex-1">
+          <span className="text-[10px] font-semibold tracking-[0.14em] text-neutral-400">
+            STEP {item.number}
+          </span>
 
-    <h3 className="mt-1 text-lg font-semibold tracking-[-0.025em] text-neutral-950">
-      {item.title}
-    </h3>
+          <h3 className="mt-1 text-base font-semibold tracking-[-0.025em] text-neutral-950 sm:text-lg">
+            {item.title}
+          </h3>
 
-    <p className="mt-2 text-sm leading-6 text-neutral-500">
-      {item.description}
-    </p>
+          <p className="mt-2 break-words text-[13px] leading-6 text-neutral-500 sm:text-sm">
+            {item.description}
+          </p>
 
-    <div className="mt-4 border-t border-neutral-100 pt-3">
-      <span className="text-[11px] font-medium text-neutral-700">
-        {item.outcome}
-      </span>
-    </div>
-  </div>
-</div>
+          <div className="mt-4 border-t border-neutral-100 pt-3">
+            <p className="text-xs font-medium leading-5 text-neutral-700">
+              {item.outcome}
+            </p>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 }
 
-function ValueStatement() {
+function ValueStatement({
+  reduceMotion,
+}: {
+  reduceMotion: boolean | null;
+}) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 25 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.35 }}
+      viewport={{ once: true, amount: 0.2 }}
       transition={{
-        duration: 0.7,
-        delay: 0.1,
-        ease: [0.22, 1, 0.36, 1],
+        duration: reduceMotion ? 0 : 0.5,
+        ease,
       }}
-      className="
-        relative
-        mx-auto
-        mt-24
-        max-w-5xl
-        overflow-hidden
-        rounded-[28px]
-        border border-neutral-200
-        bg-neutral-950
-        px-6 py-10
-        sm:px-10
-        lg:px-14
-        lg:py-12
-      "
+      className="relative mx-auto mt-16 max-w-5xl overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-950 px-5 py-8 sm:mt-24 sm:px-10 sm:py-10 lg:px-14 lg:py-12"
     >
-      {/* Background glow */}
       <div
-        className="
-          pointer-events-none
-          absolute
-          -right-32
-          -top-32
-          h-72
-          w-72
-          rounded-full
-          bg-white/[0.05]
-          blur-3xl
-        "
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-24 -top-28 size-64 rounded-full bg-white/[0.05] blur-3xl sm:size-72"
       />
 
-      <div className="relative grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div>
+      <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-10">
+        <div className="min-w-0">
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-white/10">
               <LockKeyhole
                 size={13}
                 className="text-white"
+                aria-hidden="true"
               />
-            </div>
+            </span>
 
             <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-neutral-400">
               One controlled workflow
@@ -518,34 +391,32 @@ function ValueStatement() {
           </h3>
 
           <p className="mt-4 max-w-xl text-sm leading-6 text-neutral-400">
-            Every case has context, ownership, evidence, deadlines,
-            decisions, and a documented history, giving teams the
-            visibility they need to resolve issues responsibly.
+            Every case has context, ownership, evidence, deadlines, decisions,
+            and a documented history, giving teams the visibility they need to
+            resolve issues responsibly.
           </p>
         </div>
 
-        {/* Mini metrics */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-2">
-          <MiniMetric
-            icon={UserRoundCheck}
-            label="Ownership"
-          />
-
-          <MiniMetric
-            icon={Clock3}
-            label="SLA tracking"
-          />
-
-          <MiniMetric
-            icon={FileSearch}
-            label="Evidence"
-          />
-
-          <MiniMetric
-            icon={History}
-            label="Audit history"
-          />
+          {metrics.map((metric) => (
+            <MiniMetric
+              key={metric.label}
+              icon={metric.icon}
+              label={metric.label}
+              reduceMotion={reduceMotion}
+            />
+          ))}
         </div>
+      </div>
+
+      <div className="relative mt-7 border-t border-white/10 pt-5">
+        <a
+          href="#how-it-works"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-white/80 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-4 focus-visible:ring-offset-neutral-950"
+        >
+          Explore the workflow
+          <ArrowRight size={14} aria-hidden="true" />
+        </a>
       </div>
     </motion.div>
   );
@@ -554,31 +425,29 @@ function ValueStatement() {
 function MiniMetric({
   icon: Icon,
   label,
+  reduceMotion,
 }: {
-  icon: React.ElementType;
+  icon: ElementType;
   label: string;
+  reduceMotion: boolean | null;
 }) {
   return (
     <motion.div
-      whileHover={{
-        backgroundColor: "rgba(255,255,255,0.08)",
-      }}
-      className="
-        flex
-        min-w-[120px]
-        items-center
-        gap-2.5
-        rounded-xl
-        border border-white/10
-        bg-white/[0.04]
-        px-3
-        py-3
-        transition-colors
-      "
+      whileHover={
+        reduceMotion
+          ? undefined
+          : { backgroundColor: "rgba(255,255,255,0.08)" }
+      }
+      transition={{ duration: 0.18 }}
+      className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-2.5 py-3 sm:gap-2.5 sm:px-3"
     >
-      <Icon size={14} className="text-neutral-400" />
+      <Icon
+        size={14}
+        className="shrink-0 text-neutral-400"
+        aria-hidden="true"
+      />
 
-      <span className="text-[10px] font-medium text-neutral-300">
+      <span className="break-words text-[10px] font-medium leading-4 text-neutral-300 sm:text-xs">
         {label}
       </span>
     </motion.div>

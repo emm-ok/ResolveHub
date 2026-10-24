@@ -6,11 +6,11 @@ import { getCaseRequestController, getCaseRequestsController, getMyCaseRequestCo
 const router = Router();
 
 router.use(requireAuthentication)
+router.get("/requests/me", getMyCaseRequestsController);
+router.get("/requests/:requestId/me", getMyCaseRequestController);
 router.post("/:companyId/requests", 
     submitCaseRequestController);
 
-router.get("/requests/me", getMyCaseRequestsController);
-router.get("/requests/:requestId/me", getMyCaseRequestController);
 router.get("/:companyId/requests", getCaseRequestsController);
 router.get("/:companyId/requests/:requestId", getCaseRequestController);
 
