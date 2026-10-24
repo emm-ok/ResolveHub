@@ -1,4 +1,3 @@
-
 export interface DashboardCompany {
     id: string;
     name: string;
@@ -36,6 +35,9 @@ export interface DashboardRequest {
     requestNumber: string;
     title: string;
     status: string;
+    submitter: {
+        name: string;
+    } | null;
     createdAt: string;
     updatedAt: string;
     reviewedAt: string | null;

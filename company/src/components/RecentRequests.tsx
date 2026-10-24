@@ -1,7 +1,7 @@
 
 import { ArrowUpRight, Inbox } from "lucide-react";
 import { Link } from "react-router";
-import type { DashboardRequest } from "../lib/api/company";
+import type { DashboardRequest } from "../types/company";
 import StatusBadge from "./StatusBadge";
 
 interface RecentRequestsProps {
@@ -83,9 +83,9 @@ export default function RecentRequests({ requests }: RecentRequestsProps) {
                                             <p className="truncate text-xs font-semibold text-slate-800">
                                                 {request.title}
                                             </p>
-                                            {request.submitterName && (
+                                            {request.submitter?.name && (
                                                 <p className="mt-1 truncate text-[11px] text-slate-400">
-                                                    {request.submitterName}
+                                                    {request.submitter.name}
                                                 </p>
                                             )}
                                         </td>

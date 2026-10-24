@@ -364,6 +364,11 @@ export async function getMyCompanyDashboard({
                 updatedAt: true,
                 reviewedAt: true,
                 rejectionReason: true,
+                submitter: {
+                    select: {
+                        name: true,
+                    }
+                }
             },
         }),
     ]);
