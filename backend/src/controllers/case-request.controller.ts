@@ -383,7 +383,7 @@ export async function getCasesController(
     }
 
 
-    const clerkId = getClerkUserId(req)
+    const clerkUserId = getClerkUserId(req)
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
