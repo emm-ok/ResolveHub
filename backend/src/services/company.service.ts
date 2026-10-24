@@ -1,4 +1,4 @@
-import { AuditAction, AuditEntity, CompanyStatus, MembershipStatus, PermissionCode, UserStatus } from "@prisma/client";
+import { AuditAction, AuditEntity, CaseStatus, CompanyStatus, MembershipStatus, PermissionCode, UserStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { createCompanySchema, type UpdateCompanyInput } from "../validation/company.js";
 import { seedCompanyRoles } from "./company-role.service.js";
@@ -205,6 +205,221 @@ export async function getAllCompanies({
             total,
             totalPages: Math.ceil(total / limit),
         },
+    };
+}
+
+interface GetMyCompanyDashboardParams {
+    clerkId: string;
+}
+
+const RECENT_REQUESTS_LIMIT = 5;
+
+const PENDING_REQUEST_STATUSES = new Set([
+    "OPEN",
+    "IN_PROGRESS",
+    "TRIAGED",
+    "WAITING_FOR_CUSTOMER",
+    "WAITING_FOR_THIRD_PARTY",
+]);
+
+const RESOLVED_CASE_STATUSES = new Set([
+    "RESOLVED",
+    "CLOSED",
+]);
+
+const INACTIVE_CASE_STATUSES = new Set([
+    "RESOLVED",
+    "CLOSED",
+]);
+
+export async function getMyCompanyDashboard({
+    clerkId,
+}: GetMyCompanyDashboardParams) {
+    if (!clerkId) {
+        throw new ServiceError(401, "Authentication required.");
+    }
+
+    // Resolve the authenticated user through their Clerk ID.
+    const user = await prisma.user.findFirst({
+        where: {
+            clerkId,
+            status: UserStatus.ACTIVE,
+            deletedAt: null,
+        },
+        select: {
+            id: true,
+        },
+    });
+
+    if (!user) {
+        throw new ServiceError(404, "User account not found.");
+    }
+
+    // Find the user's active membership and ensure the company is available.
+    const membership = await prisma.companyMember.findFirst({
+        where: {
+            userId: user.id,
+            status: MembershipStatus.ACTIVE,
+            company: {
+                status: CompanyStatus.ACTIVE,
+                deletedAt: null,
+            },
+        },
+        select: {
+            id: true,
+            role: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+            department: true,
+            jobTitle: true,
+            joinedAt: true,
+            company: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    email: true,
+                    phone: true,
+                    website: true,
+                    logoUrl: true,
+                    description: true,
+                    timezone: true,
+                    status: true,
+                },
+            },
+        },
+    });
+
+    if (!membership) {
+        throw new ServiceError(
+            403,
+            "You do not have an active company membership.",
+        );
+    }
+
+    const companyId = membership.company.id;
+
+    // Fetch company-scoped statistics and recent requests concurrently.
+    const [
+        totalRequests,
+        requestStatusGroups,
+        totalCases,
+        caseStatusGroups,
+        recentRequests,
+    ] = await Promise.all([
+        prisma.caseRequest.count({
+            where: {
+                companyId,
+                deletedAt: null,
+            },
+        }),
+
+        prisma.caseRequest.groupBy({
+            by: ["status"],
+            where: {
+                companyId,
+                deletedAt: null,
+            },
+            _count: {
+                _all: true,
+            },
+        }),
+
+        prisma.case.count({
+            where: {
+                companyId,
+                deletedAt: null,
+            },
+        }),
+
+        prisma.case.groupBy({
+            by: ["status"],
+            where: {
+                companyId,
+                deletedAt: null,
+            },
+            _count: {
+                _all: true,
+            },
+        }),
+
+        prisma.caseRequest.findMany({
+            where: {
+                companyId,
+                deletedAt: null,
+            },
+            orderBy: {
+                createdAt: "desc",
+            },
+            take: RECENT_REQUESTS_LIMIT,
+            select: {
+                id: true,
+                requestNumber: true,
+                title: true,
+                status: true,
+                createdAt: true,
+                updatedAt: true,
+                reviewedAt: true,
+                rejectionReason: true,
+            },
+        }),
+    ]);
+
+    const pendingRequests = requestStatusGroups.reduce(
+        (total: any, group: any) =>
+            total +
+            (PENDING_REQUEST_STATUSES.has(String(group.status))
+                ? group._count._all
+                : 0),
+        0,
+    );
+
+    const resolvedCases = caseStatusGroups.reduce(
+        (total: any, group: any) =>
+            total +
+            (RESOLVED_CASE_STATUSES.has(String(group.status))
+                ? group._count._all
+                : 0),
+        0,
+    );
+
+    const activeCases = caseStatusGroups.reduce(
+        (total: any, group: any) =>
+            total +
+            (INACTIVE_CASE_STATUSES.has(String(group.status))
+                ? 0
+                : group._count._all),
+        0,
+    );
+
+    return {
+        company: membership.company,
+
+        member: {
+            membershipId: membership.id,
+            role: membership.role
+                ? {
+                    id: membership.role.id,
+                    name: membership.role.name,
+                }
+                : null,
+            department: membership.department,
+            jobTitle: membership.jobTitle,
+            joinedAt: membership.joinedAt,
+        },
+
+        stats: {
+            totalRequests,
+            pendingRequests,
+            totalCases,
+            activeCases,
+            resolvedCases,
+        },
+
+        recentRequests,
     };
 }
 

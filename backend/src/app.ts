@@ -20,7 +20,7 @@ import { globalErrorHandler, notFoundHandler } from "./middleware/error-handler.
 const app: Application = express();
 
 app.use(cors({
-    origin: [env.CUSTOMER_URL, env.ADMIN_URL],
+    origin: [env.CUSTOMER_URL, env.ADMIN_URL, env.COMPANY_URL],
     credentials: true,
 }));
 

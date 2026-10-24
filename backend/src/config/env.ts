@@ -9,6 +9,7 @@ export const env = {
 
     CUSTOMER_URL: process.env.CUSTOMER_URL!,
     ADMIN_URL: process.env.ADMIN_URL!,
+    COMPANY_URL: process.env.COMPANY_URL!,
 
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME!,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY!,

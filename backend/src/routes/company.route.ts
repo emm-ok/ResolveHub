@@ -7,6 +7,7 @@ import {
     updateCompanyController,
     deactivateCompanyController,
     getAllCompanies,
+    getMyCompanyDashboardController,
 } from "../controllers/company.controller.js";
 import { acceptCompanyInvitationController, getCompanyInvitationController, getCompanyInvitationsController, sendCompanyInvitationController } from "../controllers/company-invitation.controller.js";
 import {
@@ -17,12 +18,14 @@ import {
 
 const router = Router();
 
-// router.use(requireAuthentication)
+router.use(requireAuthentication)
 // Existing endpoint — retain its current validation and behavior.
 router.post("/", createCompanyController);
 
 // List all active companies
 router.get("/all-companies", getAllCompanies)
+
+router.get("/me", getMyCompanyDashboardController);
 
 // List the authenticated user's active company memberships.
 router.get("/", getCompaniesController);
@@ -36,11 +39,11 @@ router.post("/:companyId/invitations", sendCompanyInvitationController,);
 router.get("/:companyId/invitations/:invitationId", getCompanyInvitationController);
 
 
-router.get("/:companyId/members",getCompanyMembersController);
+router.get("/:companyId/members", getCompanyMembersController);
 
-router.patch("/:companyId/members/:memberId",updateCompanyMemberController);
+router.patch("/:companyId/members/:memberId", updateCompanyMemberController);
 
-router.delete("/:companyId/members/:memberId",removeCompanyMemberController);
+router.delete("/:companyId/members/:memberId", removeCompanyMemberController);
 
 // Read company settings.
 router.get("/:companyId", getCompanyController);

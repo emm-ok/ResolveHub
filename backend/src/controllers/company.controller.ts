@@ -5,7 +5,7 @@ import type {
 } from "express";
 
 import { createCompanySchema } from "../validation/company.js";
-import { createCompany as createCompanyService, getAllCompanies as getAllCompaniesService } from "../services/company.service.js";
+import { createCompany as createCompanyService, getAllCompanies as getAllCompaniesService, getMyCompanyDashboard } from "../services/company.service.js";
 import {
     companyIdParamsSchema,
     deactivateCompanySchema,
@@ -82,6 +82,28 @@ export async function getAllCompanies(
         next(error);
     }
 }
+
+
+export async function getMyCompanyDashboardController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const clerkId = getClerkUserId(req);
+
+        const dashboard = await getMyCompanyDashboard({ clerkId });
+
+        res.status(200).json({
+            success: true,
+            message: "Company dashboard retrieved successfully.",
+            data: dashboard,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 /**
  * GET /companies
