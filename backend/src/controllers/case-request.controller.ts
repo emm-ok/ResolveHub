@@ -185,7 +185,6 @@ export async function getMyCaseRequestsController(
 
     const clerkUserId = getClerkUserId(req)
 
-    // const { clerkUserId } = req.body
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
@@ -243,8 +242,6 @@ export async function getMyCaseRequestController(
 
     const clerkUserId = getClerkUserId(req)
 
-    // const { clerkUserId } = req.body
-
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
         return;
@@ -284,8 +281,6 @@ export async function getCaseRequestsController(
     }
 
     const clerkUserId = getClerkUserId(req)
-
-    // const { clerkUserId } = req.body
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
@@ -387,9 +382,8 @@ export async function getCasesController(
         return;
     }
 
-    // const clerkUserId = req.user?.clerkId;
 
-    const { clerkUserId } = req.body
+    const clerkId = getClerkUserId(req)
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });
@@ -446,9 +440,7 @@ export async function getCaseDetailsController(
         return;
     }
 
-    // const clerkUserId = req.user?.clerkId;
-
-    const { clerkUserId } = req.body
+    const clerkUserId = getClerkUserId(req)
 
     if (!clerkUserId) {
         res.status(401).json({ message: "Authentication required." });

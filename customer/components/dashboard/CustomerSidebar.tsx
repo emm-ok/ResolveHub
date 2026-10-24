@@ -28,11 +28,6 @@ const navigation = [
         href: "/dashboard/companies",
         icon: Building2,
     },
-    {
-        label: "My Profile",
-        href: "/dashboard/profile",
-        icon: UserRound,
-    },
 ];
 
 interface CustomerSidebarProps {

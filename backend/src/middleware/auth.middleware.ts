@@ -32,8 +32,8 @@ export function requireAuthentication(
 }
 
 export function getClerkUserId(req: Request): string {
-  // const clerkUserId = req.user?.clerkId;
-  const { clerkUserId } = req.body;
+  const clerkUserId = req.user?.clerkId;
+  // const { clerkUserId } = req.body;
 
   if (!clerkUserId) {
     throw new ServiceError(401, "Authentication required.");
