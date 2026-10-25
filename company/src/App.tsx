@@ -77,7 +77,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/sign-in/*" element={<CompanySignInPage />} />
+      <Route path="/sign-in" element={<CompanySignInPage />} />
       <Route element={<RequireSignedInMember />}>
         <Route path="/dashboard" element={<CompanyDashboardLayout />}>
           <Route index element={<DashboardPage />} />
