@@ -44,7 +44,7 @@ export async function handleUserCreated(event: WebhookEvent) {
   const firstName = user.first_name;
   const lastName = user.last_name;
 
-  const name = `${firstName} ${lastName}`.trim() ?? user.username?.toUpperCase() ?? email.split("@")[0]?.toUpperCase();
+  const name = user.username?.toUpperCase() ?? email.split("@")[0]?.toUpperCase() ?? `${firstName} ${lastName}`.trim()
 
   await prisma.user.upsert({
     where: {
@@ -61,6 +61,7 @@ export async function handleUserCreated(event: WebhookEvent) {
     update: {
       email,
       name,
+      status: "ACTIVE",
       deletedAt: null,
     },
   });

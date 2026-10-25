@@ -7,6 +7,7 @@ import { Providers } from "./providers/ClerkProvider";
 import CompanyDashboardLayout from "./components/CompanyDashboardLayout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import RequestsPage from "./pages/dashboard/RequestsPage";
+import CompanySignUpPage from "./pages/CompanySignUpPage";
 
 // function DashboardGate() {
 //   const { isLoaded, isSignedIn } = useAuth();
@@ -78,6 +79,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/sign-in" element={<CompanySignInPage />} />
+      <Route path="/sign-up" element={<CompanySignUpPage />} />
       <Route element={<RequireSignedInMember />}>
         <Route path="/dashboard" element={<CompanyDashboardLayout />}>
           <Route index element={<DashboardPage />} />
