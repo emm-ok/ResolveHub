@@ -7,8 +7,8 @@ import { useCaseRequests } from "../../hooks/useCaseRequests";
 
 import { RequestsPageHeader } from "../../components/requests/RequestsPageHeader";
 import { RequestFilters } from "../../components/requests/RequestFilters";
-import { RequestsTable } from "../../components/requests/RequestsTable";
-import { RequestCard } from "../../components/requests/RequestCard";
+import RequestsTable from "../../components/requests/RequestsTable";
+// import { RequestCard } from "../../components/requests/RequestCard";
 import { RequestsPagination } from "../../components/requests/RequestsPagination";
 import { RequestsSkeleton } from "../../components/requests/RequestsSkeleton";
 import { RequestsEmptyState } from "../../components/requests/RequestsEmptyState";
@@ -16,6 +16,7 @@ import { RequestDetailsModal } from "../../components/requests/RequestDetailsMod
 
 import type { SortOrder } from "../../types/case-requests";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { RequestDecisionNotice } from "../../components/requests/RequestDecisionNotice";
 
 const PAGE_SIZE = 10;
 
@@ -50,6 +51,7 @@ export default function RequestsPage() {
     const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
         null,
     );
+    const [decisionNotice, setDecisionNotice] = useState<string | null>(null);
 
     const debouncedSearch = useDebouncedValue(search, 300);
 
@@ -135,6 +137,14 @@ export default function RequestsPage() {
                 onRefresh={() => void refetchRequests()}
             />
 
+
+            {decisionNotice && (
+                <RequestDecisionNotice
+                    message={decisionNotice}
+                    onDismiss={() => setDecisionNotice(null)}
+                />
+            )}
+
             <RequestFilters
                 search={search}
                 status={status}
@@ -194,7 +204,7 @@ export default function RequestsPage() {
                             onSelect={setSelectedRequestId}
                         />
 
-                        <div className="space-y-3 p-3 md:hidden">
+                        {/* <div className="space-y-3 p-3 md:hidden">
                             {requests.map((request, index) => (
                                 <RequestCard
                                     key={request.id}
@@ -203,7 +213,7 @@ export default function RequestsPage() {
                                     onSelect={setSelectedRequestId}
                                 />
                             ))}
-                        </div>
+                        </div> */}
 
                         {pagination && (
                             <RequestsPagination
@@ -227,6 +237,7 @@ export default function RequestsPage() {
                 companyId={companyId}
                 requestId={selectedRequestId}
                 onClose={() => setSelectedRequestId(null)}
+                onActionSuccess={(message) => setDecisionNotice(message)}
             />
         </div>
     );

@@ -50,8 +50,6 @@ export function MyRequestsPage() {
 
     const result = requestsQuery.data;
     const requests = result?.data ?? [];
-    console.log("Result", requestsQuery.data)
-    console.log("Requests", requests)
     const pagination = result?.pagination;
 
     const handleStatusChange = useCallback((value: string) => {

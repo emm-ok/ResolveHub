@@ -23,11 +23,11 @@ export function RequestsPagination({
         <footer className="flex flex-col gap-4 border-t border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 dark:border-white/10">
             <p className="text-xs text-slate-500 dark:text-slate-400">
                 Showing{" "}
-                <span className="font-medium text-slate-700 dark:text-slate-200">
+                <span className="font-medium text-slate-700">
                     {firstItem}–{lastItem}
                 </span>{" "}
                 of{" "}
-                <span className="font-medium text-slate-700 dark:text-slate-200">
+                <span className="font-medium text-slate-700">
                     {total}
                 </span>{" "}
                 requests
@@ -42,7 +42,7 @@ export function RequestsPagination({
                     type="button"
                     onClick={() => onPageChange(page - 1)}
                     disabled={!hasPreviousPage || isFetching}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-white/5"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     <ChevronLeft size={16} aria-hidden="true" />
                     <span className="hidden sm:inline">Previous</span>
@@ -52,7 +52,7 @@ export function RequestsPagination({
                     type="button"
                     onClick={() => onPageChange(page + 1)}
                     disabled={!hasNextPage || isFetching}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-white/5"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     <span className="hidden sm:inline">Next</span>
                     <ChevronRight size={16} aria-hidden="true" />

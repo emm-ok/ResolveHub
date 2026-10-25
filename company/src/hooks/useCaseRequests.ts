@@ -1,7 +1,7 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ListCaseRequestsParams } from "../types/case-requests";
-import { getCaseRequest, getCaseRequests } from "../lib/api/case-requests";
+import { acceptCaseRequest, getCaseRequest, getCaseRequests, rejectCaseRequest } from "../lib/api/case-requests";
 
 export const caseRequestKeys = {
     all: ["case-requests"] as const,
@@ -55,6 +55,62 @@ export function useCaseRequestDetails(
             }
 
             return failureCount < 2;
+        },
+    });
+}
+
+export function useAcceptCaseRequest(companyId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (requestId: string) =>
+            acceptCaseRequest({ companyId, requestId }),
+
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: caseRequestKeys.lists(companyId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: caseRequestKeys.details(companyId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: ["company-dashboard"],
+                }),
+            ]);
+        },
+    });
+}
+
+export function useRejectCaseRequest(companyId: string) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({
+            requestId,
+            reason,
+        }: {
+            requestId: string;
+            reason: string;
+        }) =>
+            rejectCaseRequest({
+                companyId,
+                requestId,
+                reason,
+            }),
+
+        onSuccess: async () => {
+            await Promise.all([
+                queryClient.invalidateQueries({
+                    queryKey: caseRequestKeys.lists(companyId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: caseRequestKeys.details(companyId),
+                }),
+                queryClient.invalidateQueries({
+                    queryKey: ["company-dashboard"],
+                }),
+            ]);
         },
     });
 }

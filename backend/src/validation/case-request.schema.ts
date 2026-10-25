@@ -68,7 +68,6 @@ export type CreateCaseRequestInput = z.infer<
 
 export const submitCaseRequestSchema = z
     .object({
-        // clerkId: z.string(),
         companyId: z.string().uuid(),
 
         requesterName: z.string().trim().min(2).max(120),
@@ -101,7 +100,6 @@ export const submitCaseRequestSchema = z
 
 export const rejectCaseRequestSchema = z
     .object({
-        clerkId: z.string().min(1, "Clerk ID is required."),
         reason: z
             .string()
             .trim()

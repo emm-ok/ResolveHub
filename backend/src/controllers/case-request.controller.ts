@@ -109,12 +109,11 @@ export async function acceptCaseRequestController(
         return;
     }
 
-    // const userId = req.user?.clerkId;
-    const { clerkId } = req.body;
 
+    const clerkUserId = getClerkUserId(req)
     try {
         const result = await acceptCaseRequestService({
-            clerkUserId: clerkId as string,
+            clerkUserId,
             companyId: params.data.companyId,
             requestId: params.data.requestId,
         });
@@ -151,10 +150,11 @@ export async function rejectCaseRequestController(
     }
 
     // const userId = req.user?.clerkId;
+    const clerkUserId = getClerkUserId(req)
 
     try {
         const result = await rejectCaseRequestService({
-            clerkUserId: parsedBody.data.clerkId as string,
+            clerkUserId,
             companyId: params.data.companyId,
             requestId: params.data.requestId,
             reason: parsedBody.data.reason,

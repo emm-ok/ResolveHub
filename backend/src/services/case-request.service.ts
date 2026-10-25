@@ -553,11 +553,11 @@ export async function getMyCaseRequests({
             clerkId: clerkUserId,
         },
         select: {
-            id:  true,
+            id: true,
         }
     })
 
-    if(!user) {
+    if (!user) {
         throw new ServiceError(404, "User not found")
     }
 
@@ -624,7 +624,7 @@ export async function getMyCaseRequest({
     if (!user) {
         throw new ServiceError(404, "User not found")
     }
-    
+
     const request = await prisma.caseRequest.findFirst({
         where: {
             id: requestId,
@@ -737,13 +737,20 @@ export async function getCaseRequest({
             requestNumber: true,
             title: true,
             description: true,
+            category: true,
+            requestedPriority: true,
+            channel: true,
+            requesterName: true,
+            requesterEmail: true,
+            requesterPhone: true,
+            caseId: true,
             status: true,
             createdAt: true,
             updatedAt: true,
             reviewedAt: true,
             rejectionReason: true,
-            // Add customer and linked-case relations using your actual schema.
         },
+
     });
 
     if (!request) {

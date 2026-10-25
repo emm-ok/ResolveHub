@@ -7,7 +7,7 @@ import { escalateCaseController } from "../controllers/case-escalation.controlle
 
 const router = Router();
 
-// router.use(requireAuthentication)
+router.use(requireAuthentication)
 
 router.get("/:companyId/cases", getCasesController)
 router.get("/:companyId/cases/:caseId", getCaseDetailsController)

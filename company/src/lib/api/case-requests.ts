@@ -2,9 +2,13 @@
 import { api } from "./axios";
 
 import type {
+    AcceptCaseRequestInput,
+    AcceptedCaseRequestResult,
+    CaseRequestActionResponse,
     CaseRequestDetails,
     CaseRequestsResponse,
     ListCaseRequestsParams,
+    RejectCaseRequestInput,
 } from "../../types/case-requests";
 
 export async function getCaseRequests({
@@ -46,4 +50,28 @@ export async function getCaseRequest(
     );
 
     return response.data.data;
+}
+
+export async function acceptCaseRequest({
+    companyId,
+    requestId,
+}: AcceptCaseRequestInput) {
+    const response = await api.post<CaseRequestActionResponse<AcceptedCaseRequestResult>>(
+        `/manage-cases/${encodeURIComponent(companyId)}/requests/${encodeURIComponent(requestId)}/accept`,
+    );
+
+    return response.data;
+}
+
+export async function rejectCaseRequest({
+    companyId,
+    requestId,
+    reason,
+}: RejectCaseRequestInput) {
+    const response = await api.post<CaseRequestActionResponse<unknown>>(
+        `/manage-cases/${encodeURIComponent(companyId)}/requests/${encodeURIComponent(requestId)}/reject`,
+        { reason },
+    );
+
+    return response.data;
 }
