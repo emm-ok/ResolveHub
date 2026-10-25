@@ -17,8 +17,6 @@ export default function DashboardPage() {
         return <DashboardSkeleton />;
     }
 
-    console.log("Company Data", data)
-
     if (isError || !data) {
         return (
             <section className="rounded-xl border border-red-200 bg-white p-6">

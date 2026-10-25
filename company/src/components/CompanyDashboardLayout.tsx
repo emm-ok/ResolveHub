@@ -59,7 +59,6 @@ export default function CompanyDashboardLayout() {
         user?.firstName ||
         "there";
 
-        console.log("CurrentUser", currentUser)
         const companyRole = currentUser?.memberships[0]?.role?.name
     // const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Company member";
     return (
