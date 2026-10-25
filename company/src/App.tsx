@@ -6,6 +6,7 @@ import { clerkAppearance } from "./config/clerk";
 import { Providers } from "./providers/ClerkProvider";
 import CompanyDashboardLayout from "./components/CompanyDashboardLayout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
+import RequestsPage from "./pages/dashboard/RequestsPage";
 
 // function DashboardGate() {
 //   const { isLoaded, isSignedIn } = useAuth();
@@ -80,10 +81,7 @@ function AppRoutes() {
       <Route element={<RequireSignedInMember />}>
         <Route path="/dashboard" element={<CompanyDashboardLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route
-            path="requests"
-            element={<PlaceholderPage title="Customer requests" />}
-          />
+          <Route path="/dashboard/requests" element={<RequestsPage />} />
           <Route
             path="requests/:requestId"
             element={<PlaceholderPage title="Request details" />}
