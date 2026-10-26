@@ -44,8 +44,8 @@ export async function submitCaseRequest(
         });
 
         if (!company) {
-            throw new Error(
-                "This company's request submission form is unavailable.",
+            throw new ServiceError(
+                404, "This company's request submission form is unavailable.",
             );
         }
 
@@ -171,15 +171,15 @@ export async function acceptCaseRequest({
             });
 
             if (!request) {
-                throw new Error("Case request not found.");
+                throw new ServiceError(404,"Case request not found.");
             }
 
             if (
                 request.status !== CaseRequestStatus.SUBMITTED &&
                 request.status !== CaseRequestStatus.UNDER_REVIEW
             ) {
-                throw new Error(
-                    "This request cannot be accepted in its current state.",
+                throw new ServiceError(
+                    409, "This request cannot be accepted in its current state.",
                 );
             }
 
@@ -193,8 +193,8 @@ export async function acceptCaseRequest({
             })
 
             if (request.caseId || existingCase) {
-                throw new Error(
-                    "This request has already been converted into a case.",
+                throw new ServiceError(
+                    409, "This request has already been converted into a case.",
                 );
             }
 
@@ -338,8 +338,8 @@ export async function acceptCaseRequest({
                     policy.firstResponseMinutes <= 0 ||
                     policy.resolutionMinutes <= 0
                 ) {
-                    throw new Error(
-                        "The configured SLA targets must be positive.",
+                    throw new ServiceError(
+                        400, "The configured SLA targets must be positive.",
                     );
                 }
 
@@ -447,8 +447,8 @@ export async function rejectCaseRequest({
         normalizedReason.length < 5 ||
         normalizedReason.length > 1000
     ) {
-        throw new Error(
-            "Provide a rejection reason between 5 and 1000 characters.",
+        throw new ServiceError(
+           400, "Provide a rejection reason between 5 and 1000 characters.",
         );
     }
 
@@ -462,15 +462,15 @@ export async function rejectCaseRequest({
         });
 
         if (!request) {
-            throw new Error("Case request not found.");
+            throw new ServiceError(404, "Case request not found.");
         }
 
         if (
             request.status !== CaseRequestStatus.SUBMITTED &&
             request.status !== CaseRequestStatus.UNDER_REVIEW
         ) {
-            throw new Error(
-                "This request cannot be rejected in its current state.",
+            throw new ServiceError(
+                409, "This request cannot be rejected in its current state.",
             );
         }
 
@@ -754,7 +754,7 @@ export async function getCaseRequest({
     });
 
     if (!request) {
-        throw new Error("Case request not found.");
+        throw new ServiceError(404,"Case request not found.");
     }
 
     if (request.status === CaseRequestStatus.SUBMITTED) {
@@ -938,7 +938,7 @@ export async function getCaseDetails({
     });
 
     if (!caseRecord) {
-        throw new Error("Case not found.");
+        throw new ServiceError(404, "Case not found.");
     }
 
     return caseRecord;

@@ -89,9 +89,9 @@ export default function RequestsPage() {
         return (
             <div className="mx-auto w-full max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
                 <div className="animate-pulse space-y-3">
-                    <div className="h-4 w-32 rounded bg-slate-200 dark:bg-white/10" />
-                    <div className="h-8 w-64 max-w-full rounded bg-slate-200 dark:bg-white/10" />
-                    <div className="h-4 w-96 max-w-full rounded bg-slate-100 dark:bg-white/5" />
+                    <div className="h-4 w-32 rounded bg-slate-200" />
+                    <div className="h-8 w-64 max-w-full rounded bg-slate-200" />
+                    <div className="h-4 w-96 max-w-full rounded bg-slate-100" />
                 </div>
                 <RequestsSkeleton />
             </div>
