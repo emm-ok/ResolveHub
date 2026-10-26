@@ -11,7 +11,6 @@ import {
     Edit3,
     ExternalLink,
     FileText,
-    RefreshCw,
     UserRoundPlus,
 } from "lucide-react";
 

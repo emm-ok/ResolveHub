@@ -21,10 +21,6 @@ import {
 } from "../../components/cases/CasesPageStates";
 import { useCompanyDashboard } from "../../hooks/useCompany";
 
-interface CasesPageProps {
-    companyId: string;
-}
-
 const PAGE_SIZE = 10;
 
 function getErrorMessage(error: unknown): string {
