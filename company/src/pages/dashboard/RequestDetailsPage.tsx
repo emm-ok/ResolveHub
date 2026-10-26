@@ -193,7 +193,7 @@ export default function RequestDetailsPage() {
                     queryKey: caseRequestKeys.lists(companyId),
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: caseRequestKeys.details(companyId, requestId),
+                    queryKey: caseRequestKeys.details(companyId),
                 }),
             ]);
         } catch (error) {
