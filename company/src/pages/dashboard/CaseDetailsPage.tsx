@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { motion } from "framer-motion";
 import {
     AlertTriangle,
@@ -33,10 +33,8 @@ import type {
     CaseStatus,
 } from "../../types/case-details";
 import { useCompanyDashboard } from "../../hooks/useCompany";
-
-interface Props {
-    companyId: string;
-}
+import type { CasePageState } from "../../components/case-details/CasePageStates";
+import CasePageStates from "../../components/case-details/CasePageStates";
 
 const statusLabels: Record<CaseStatus, string> = {
     OPEN: "Open",
@@ -102,90 +100,43 @@ export default function CaseDetailsPage() {
     const [editOpen, setEditOpen] = useState(false);
     const [escalateOpen, setEscalateOpen] = useState(false);
 
+    const navigate = useNavigate();
     const caseQuery = useCaseDetails(companyId as string, caseId);
     const assignmentsQuery = useCaseAssignments(companyId as string, caseId);
     const activitiesQuery = useCaseActivities(companyId as string, caseId);
 
-    if (!companyId || !caseId) {
+    const httpStatus = (
+        caseQuery.error as
+        | { response?: { status?: number } }
+        | null
+        | undefined
+    )?.response?.status;
+
+    let pageState: CasePageState | null = null;
+
+    if (!caseId) {
+        pageState = "invalid-id";
+    } else if (caseQuery.isPending) {
+        pageState = "loading";
+    } else if (caseQuery.isError) {
+        pageState = httpStatus === 404 ? "not-found" : "error";
+    } else if (!caseQuery.data) {
+        pageState = "not-found";
+    }
+
+    if (pageState) {
         return (
-            <main className="mx-auto max-w-3xl px-4 py-16 text-center">
-                <h1 className="text-xl font-semibold text-black">
-                    Case unavailable
-                </h1>
-                <p className="mt-2 text-sm text-neutral-500">
-                    A company and case must be selected to view this page.
-                </p>
-                <Link
-                    to="/dashboard/cases"
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-black underline underline-offset-4"
-                >
-                    <ArrowLeft size={16} />
-                    Back to cases
-                </Link>
-            </main>
+            <CasePageStates
+                state={pageState}
+                onRetry={() => {
+                    void caseQuery.refetch();
+                }}
+                onBack={() => navigate("/dashboard/cases")}
+            />
         );
     }
 
-    if (caseQuery.isPending) {
-        return (
-            <main className="mx-auto max-w-[1500px] space-y-6 px-4 py-7 sm:px-6 lg:px-8">
-                <div className="h-4 w-32 animate-pulse rounded bg-neutral-100" />
-                <div className="rounded-xl border border-neutral-200 bg-white p-6">
-                    <div className="animate-pulse space-y-4">
-                        <div className="h-4 w-36 rounded bg-neutral-100" />
-                        <div className="h-8 w-2/3 rounded bg-neutral-100" />
-                        <div className="h-4 w-full max-w-xl rounded bg-neutral-100" />
-                        <div className="h-10 w-48 rounded bg-neutral-100" />
-                    </div>
-                </div>
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-                    <div className="h-72 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
-                    <div className="h-56 animate-pulse rounded-xl border border-neutral-200 bg-neutral-50" />
-                </div>
-            </main>
-        );
-    }
-
-    if (caseQuery.isError || !caseQuery.data) {
-        const status = (
-            caseQuery.error as {
-                response?: { status?: number };
-            } | null
-        )?.response?.status;
-
-        return (
-            <main className="mx-auto max-w-3xl px-4 py-16 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50">
-                    <FileText size={22} className="text-neutral-600" />
-                </div>
-                <h1 className="mt-4 text-xl font-semibold text-black">
-                    {status === 404 ? "Case not found" : "Unable to load case"}
-                </h1>
-                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                    {getErrorMessage(caseQuery.error)}
-                </p>
-                <div className="mt-5 flex justify-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => void caseQuery.refetch()}
-                        className="inline-flex h-10 items-center gap-2 rounded-lg border border-neutral-200 px-4 text-sm font-medium hover:bg-neutral-50"
-                    >
-                        <RefreshCw size={15} />
-                        Retry
-                    </button>
-                    <Link
-                        to="/dashboard/cases"
-                        className="inline-flex h-10 items-center gap-2 rounded-lg bg-black px-4 text-sm font-medium text-white hover:bg-neutral-800"
-                    >
-                        <ArrowLeft size={15} />
-                        Back to cases
-                    </Link>
-                </div>
-            </main>
-        );
-    }
-
-    const item = caseQuery.data;
+    const item = caseQuery.data!;
 
     return (
         <>
@@ -307,7 +258,7 @@ export default function CaseDetailsPage() {
                 <div className="grid min-w-0 grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                     <div className="min-w-0 space-y-6">
                         <CaseAssignments
-                            companyId={companyId}
+                            companyId={companyId as string}
                             caseId={caseId}
                             assignments={assignmentsQuery.data ?? []}
                             onAssign={() => setAssignOpen(true)}
@@ -414,21 +365,21 @@ export default function CaseDetailsPage() {
 
             <AssignMemberModal
                 open={assignOpen}
-                companyId={companyId}
+                companyId={companyId as string}
                 caseId={caseId}
                 onClose={() => setAssignOpen(false)}
             />
 
             <EditCaseModal
                 open={editOpen}
-                companyId={companyId}
+                companyId={companyId as string}
                 caseData={item}
                 onClose={() => setEditOpen(false)}
             />
 
             <EscalateCaseDialog
                 open={escalateOpen}
-                companyId={companyId}
+                companyId={companyId as string}
                 caseId={caseId}
                 onClose={() => setEscalateOpen(false)}
             />

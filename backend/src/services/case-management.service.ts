@@ -404,8 +404,6 @@ export async function assignCaseService(
             },
         });
 
-        console.log("Assignee", assignee)
-
         if (!assignee || assignee.role.companyId !== companyId) {
             throw new ServiceError(
                 404,

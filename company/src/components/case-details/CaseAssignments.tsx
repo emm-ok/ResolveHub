@@ -36,7 +36,6 @@ export function CaseAssignments({
     const unassignMutation = useUnassignCase(companyId, caseId);
     const [error, setError] = useState<string | null>(null);
 
-    console.log("Assignments", assignments)
     const activeAssignments = assignments.filter(
         (assignment) => !assignment.unassignedAt,
     );

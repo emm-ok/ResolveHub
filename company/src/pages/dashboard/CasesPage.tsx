@@ -81,8 +81,6 @@ export default function CasesPage() {
 
     const kpisQuery = useCaseKpis(companyId ?? "");
 
-    console.log("KPI Query", kpisQuery.data)
-
     const casesQuery = useCases(companyId ?? "", {
         page,
         limit: PAGE_SIZE,

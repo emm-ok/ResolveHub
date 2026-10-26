@@ -51,8 +51,6 @@ export async function sendCompanyInvitationService({
         throw new ServiceError(404, "Inviter not found")
     }
 
-    console.log("inviter", inviter)
-
     const email = input.email.trim().toLowerCase();
     const now = new Date();
 
