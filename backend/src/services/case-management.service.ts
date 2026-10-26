@@ -725,6 +725,7 @@ export async function getCaseAssignmentsService({
                             id: true,
                             name: true,
                             avatarUrl: true,
+                            email: true,
                         },
                     },
                 },
@@ -740,6 +741,7 @@ export async function getCaseAssignmentsService({
         member: {
             id: assignment.member.id,
             name: assignment.member.user.name,
+            email: assignment.member.user.email,
             avatarUrl: assignment.member.user.avatarUrl,
             role: assignment.member.role.name,
         },
@@ -958,4 +960,104 @@ export async function closeCaseService({
 
         return updatedCase;
     });
+}
+
+interface GetCaseKpisInput {
+    companyId: string;
+    clerkUserId: string;
+}
+
+export interface CaseKpis {
+    totalCases: number;
+    openCases: number;
+    inProgressCases: number;
+    resolvedCases: number;
+    overdueCases: number;
+    unassignedCases: number;
+}
+
+export async function getCaseKpis({
+    companyId,
+    clerkUserId,
+}: GetCaseKpisInput): Promise<CaseKpis> {
+    // Replace CASE_VIEW with the existing permission that grants
+    // access to view cases in your application.
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.CASE_REQUEST_REVIEW,
+    });
+
+    const now = new Date();
+
+    const baseWhere: Prisma.CaseWhereInput = {
+        companyId,
+        deletedAt: null,
+    };
+
+    const [statusCounts, overdueCases, unassignedCases] =
+        await Promise.all([
+            prisma.case.groupBy({
+                by: ["status"],
+                where: baseWhere,
+                _count: {
+                    _all: true,
+                },
+            }),
+
+            prisma.case.count({
+                where: {
+                    ...baseWhere,
+                    status: {
+                        in: ["OPEN", "IN_PROGRESS", "WAITING_FOR_CUSTOMER", "WAITING_FOR_THIRD_PARTY", "TRIAGED"],
+                    },
+                    sla: {
+                        resolutionDueAt: {
+                            lt: now,
+                        }
+                    },
+                },
+            }),
+
+            prisma.case.count({
+                where: {
+                    ...baseWhere,
+                    status: {
+                        in: ["OPEN", "IN_PROGRESS", "WAITING_FOR_CUSTOMER", "WAITING_FOR_THIRD_PARTY", "TRIAGED"],
+                    },
+                    assignments: {
+                        none: {},
+                    },
+                },
+            }),
+        ]);
+
+    const counts = new Map(
+        statusCounts.map(({ status, _count }) => [
+            status,
+            _count._all,
+        ]),
+    );
+
+    const openCases = counts.get("OPEN") ?? 0;
+    const inProgressCases = counts.get("IN_PROGRESS") ?? 0;
+
+    // Treat both RESOLVED and CLOSED as resolved work.
+    const resolvedCases =
+        (counts.get("RESOLVED") ?? 0) +
+        (counts.get("CLOSED") ?? 0);
+
+    const totalCases = statusCounts.reduce(
+        (total, item) => total + item._count._all,
+        0,
+    );
+
+    return {
+        totalCases,
+        openCases,
+        inProgressCases,
+        resolvedCases,
+        overdueCases,
+        unassignedCases,
+    };
 }

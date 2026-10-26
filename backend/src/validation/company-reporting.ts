@@ -15,7 +15,7 @@ export const companyEvidenceParamsSchema = z.object({
 });
 
 export const companyParamsSchema = z.object({
-    companyId: z.string().uuid(),
+    companyId: z.string().uuid("Invalid company ID."),
 });
 
 export const companyReportQuerySchema = z.object({

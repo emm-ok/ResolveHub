@@ -8,6 +8,8 @@ import CompanyDashboardLayout from "./components/CompanyDashboardLayout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import RequestsPage from "./pages/dashboard/RequestsPage";
 import CompanySignUpPage from "./pages/CompanySignUpPage";
+import CasesPage from "./pages/dashboard/CasesPage";
+import CaseDetailsPage from "./pages/dashboard/CaseDetailsPage";
 
 // function DashboardGate() {
 //   const { isLoaded, isSignedIn } = useAuth();
@@ -83,12 +85,10 @@ function AppRoutes() {
       <Route element={<RequireSignedInMember />}>
         <Route path="/dashboard" element={<CompanyDashboardLayout />}>
           <Route index element={<DashboardPage />} />
-          <Route path="/dashboard/requests" element={<RequestsPage />} />
-          <Route
-            path="requests/:requestId"
-            element={<PlaceholderPage title="Request details" />}
-          />
-          <Route path="cases" element={<PlaceholderPage title="Cases" />} />
+          <Route path="requests" element={<RequestsPage />} />
+
+          <Route path="cases" element={<CasesPage />} />
+          <Route path="cases/:caseId" element={<CaseDetailsPage />} />
           <Route path="team" element={<PlaceholderPage title="Team members" />} />
           <Route path="reports" element={<PlaceholderPage title="Reports" />} />
           <Route

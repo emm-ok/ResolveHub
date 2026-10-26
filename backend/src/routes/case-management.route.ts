@@ -1,7 +1,7 @@
 import {Router} from "express";
 import { requireAuthentication } from "../middleware/auth.middleware.js";
 import { acceptCaseRequestController, getCaseDetailsController, getCasesController, rejectCaseRequestController } from "../controllers/case-request.controller.js";
-import { assignCase, closeCase, getCaseActivities, getCaseAssignments, unassignCase, updateCaseDetails } from "../controllers/case-management.controller.js";
+import { assignCase, closeCase, getCaseActivities, getCaseAssignments, getCaseKpisController, unassignCase, updateCaseDetails } from "../controllers/case-management.controller.js";
 import { escalateCaseController } from "../controllers/case-escalation.controller.js";
 
 
@@ -9,6 +9,7 @@ const router = Router();
 
 router.use(requireAuthentication)
 
+router.get("/:companyId/cases/kpis",getCaseKpisController);
 router.get("/:companyId/cases", getCasesController)
 router.get("/:companyId/cases/:caseId", getCaseDetailsController)
 

@@ -15,12 +15,14 @@ import {
     assignCaseService,
     getCaseActivitiesService,
     getCaseAssignmentsService,
+    getCaseKpis,
     ServiceError,
     unassignCaseService,
     updateCaseDetailsService,
 } from "../services/case-management.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
 import { closeCaseService } from "../services/case-management.service.js";
+import { companyParamsSchema } from "../validation/company-reporting.js";
 
 
 export function handleControllerError(
@@ -223,3 +225,26 @@ export const closeCase: RequestHandler = async (
         next(error);
     }
 };
+
+export async function getCaseKpisController(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> {
+    try {
+        const { companyId } = companyParamsSchema.parse(req.params);
+        const clerkUserId = getClerkUserId(req);
+
+        const data = await getCaseKpis({
+            companyId,
+            clerkUserId,
+        });
+
+        res.status(200).json({
+            message: "Case KPIs retrieved successfully.",
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
