@@ -5,7 +5,7 @@ import type {
 } from "express";
 
 import { createCompanySchema } from "../validation/company.js";
-import { createCompany as createCompanyService, getAllCompanies as getAllCompaniesService, getMyCompanyDashboard } from "../services/company.service.js";
+import { createCompany as createCompanyService, getAllCompanies as getAllCompaniesService, getCompanyRolesService, getMyCompanyDashboard } from "../services/company.service.js";
 import {
     companyIdParamsSchema,
     deactivateCompanySchema,
@@ -20,6 +20,7 @@ import {
 } from "../services/company.service.js";
 import { getClerkUserId } from "../middleware/auth.middleware.js";
 import z from "zod";
+import { ServiceError } from "../services/case-management.service.js";
 
 export async function createCompanyController(
     req: Request,
@@ -126,6 +127,36 @@ export async function getCompaniesController(
         next(error);
     }
 }
+
+
+export const getCompanyRolesController = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> => {
+    try {
+        const { companyId } = companyIdParamsSchema.parse(req.params);
+
+        if (!companyId) {
+            throw new ServiceError(400, "Company ID is required.");
+        }
+
+        const clerkUserId = getClerkUserId(req);
+
+        const data = await getCompanyRolesService({
+            clerkUserId,
+            companyId,
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Company roles retrieved successfully.",
+            data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 /**
  * GET /companies/:companyId

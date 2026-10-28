@@ -11,6 +11,7 @@ import CompanySignUpPage from "./pages/CompanySignUpPage";
 import CasesPage from "./pages/dashboard/CasesPage";
 import CaseDetailsPage from "./pages/dashboard/CaseDetailsPage";
 import RequestDetailsPage from "./pages/dashboard/RequestDetailsPage";
+import TeamMembersPage from "./pages/dashboard/TeamMembersPage";
 
 // function DashboardGate() {
 //   const { isLoaded, isSignedIn } = useAuth();
@@ -78,7 +79,32 @@ function PlaceholderPage({ title }: { title: string }) {
 }
 
 function AppRoutes() {
+  const rolesQuery = useCompanyRoles(companyId);
 
+  const {
+    hasPermission,
+  } = useCompanyAccess(currentPermissions);
+
+  if (rolesQuery.isPending) {
+    return <p className="p-6 text-sm text-neutral-500">Loading company roles…</p>;
+  }
+
+  if (rolesQuery.isError || !rolesQuery.data) {
+    return (
+      <div className="p-6" role="alert">
+        <p className="text-sm text-red-600">
+          Unable to load company roles. Please try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => void rolesQuery.refetch()}
+          className="mt-3 rounded-lg border px-3 py-2 text-sm"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
   return (
     <Routes>
       <Route path="/sign-in" element={<CompanySignInPage />} />
@@ -91,7 +117,15 @@ function AppRoutes() {
 
           <Route path="cases" element={<CasesPage />} />
           <Route path="cases/:caseId" element={<CaseDetailsPage />} />
-          <Route path="team" element={<PlaceholderPage title="Team members" />} />
+
+          <Route path="team" element={<TeamMembersPage
+            companyId={companyId}
+            currentUserId={currentUserId}
+            canUpdateMembers={hasPermission("MEMBER_UPDATE")}
+            canRemoveMembers={hasPermission("MEMBER_REMOVE")}
+            roles={rolesQuery.data}
+          />} />
+          
           <Route path="reports" element={<PlaceholderPage title="Reports" />} />
           <Route
             path="audit-logs"

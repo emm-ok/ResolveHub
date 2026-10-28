@@ -1,11 +1,11 @@
 
-import api from "./axios";
 import type {
     CompanyMember,
     MemberListParams,
     MemberListResponse,
     UpdateCompanyMemberInput,
 } from "../../types/company-member";
+import { api } from "./axios";
 
 export async function getCompanyMembers(
     companyId: string,

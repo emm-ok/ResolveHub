@@ -1,4 +1,4 @@
-import { AuditAction, AuditEntity, CaseStatus, CompanyStatus, MembershipStatus, PermissionCode, UserStatus } from "@prisma/client";
+import { AuditAction, AuditEntity, CaseStatus, CompanyStatus, MembershipStatus, PermissionCode, SystemRoleType, UserStatus } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { createCompanySchema, type UpdateCompanyInput } from "../validation/company.js";
 import { seedCompanyRoles } from "./company-role.service.js";
@@ -6,6 +6,7 @@ import { seedCompanySLAPolicies } from "./sla-policy.service.js";
 import { ServiceError } from "./case-management.service.js";
 import { requireCompanyPermission } from "../middleware/authorization.js";
 import z from "zod";
+import { ensureActiveCompany } from "./company-member.service.js";
 
 
 export class CompanyServiceError extends Error {
@@ -500,6 +501,86 @@ export async function getCompaniesService(
         company,
     }));
 }
+
+interface GetCompanyRolesParams {
+    clerkUserId: string;
+    companyId: string;
+    includeInactive?: boolean;
+}
+
+export const getCompanyRolesService = async ({
+    clerkUserId,
+    companyId,
+    includeInactive = false,
+}: GetCompanyRolesParams) => {
+    await requireCompanyPermission({
+        clerkUserId,
+        companyId,
+        permission: PermissionCode.ROLE_READ,
+    });
+
+    await ensureActiveCompany(companyId);
+
+    const roles = await prisma.companyRole.findMany({
+        where: {
+            companyId,
+            ...(includeInactive ? {} : { isDefault: true }),
+        },
+        orderBy: [{ isDefault: "desc" }, { name: "asc" }],
+        select: {
+            id: true,
+            companyId: true,
+            name: true,
+            slug: true,
+            description: true,
+            systemRole: true,
+            isDefault: true,
+            createdAt: true,
+            updatedAt: true,
+            permissions: {
+                select: {
+                    permission: {
+                        select: {
+                            code: true,
+                        },
+                    },
+                },
+            },
+            _count: {
+                select: {
+                    members: {
+                        where: {
+                            status: "ACTIVE",
+                        },
+                    },
+                    invitations: {
+                        where: {
+                            status: "PENDING",
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    return {
+        items: roles.map((role) => ({
+            id: role.id,
+            companyId: role.companyId,
+            name: role.name,
+            slug: role.slug,
+            description: role.description,
+            systemRole: role.systemRole as SystemRoleType | null,
+            isDefault: role.isDefault,
+            createdAt: role.createdAt,
+            updatedAt: role.updatedAt,
+            permissions: role.permissions.map(({ permission }) => permission.code),
+            memberCount: role._count.members,
+            pendingInvitationCount: role._count.invitations,
+        })),
+        total: roles.length,
+    };
+};
 
 /**
  * Get a single company's settings.

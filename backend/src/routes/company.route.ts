@@ -8,6 +8,7 @@ import {
     deactivateCompanyController,
     getAllCompanies,
     getMyCompanyDashboardController,
+    getCompanyRolesController,
 } from "../controllers/company.controller.js";
 import { acceptCompanyInvitationController, getCompanyInvitationController, getCompanyInvitationsController, sendCompanyInvitationController } from "../controllers/company-invitation.controller.js";
 import {
@@ -45,6 +46,7 @@ router.patch("/:companyId/members/:memberId", updateCompanyMemberController);
 
 router.delete("/:companyId/members/:memberId", removeCompanyMemberController);
 
+router.get("/:companyId/roles", getCompanyRolesController);
 // Read company settings.
 router.get("/:companyId", getCompanyController);
 

@@ -2,7 +2,7 @@
 import { Pencil, UserRound, UserX } from "lucide-react";
 
 import type { CompanyMember } from "../../types/company-member";
-import MemberStatusBadge from "./MemberStatusBadge";
+import MemberStatusBadge from "./MemberStatusbadge";
 
 type Props = {
     members: CompanyMember[];

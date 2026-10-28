@@ -23,12 +23,12 @@ export type CompanyMember = {
     };
 };
 
-export type CompanyRole = {
-    id: string;
-    name: string;
-    slug: string;
-    systemRole: string | null;
-};
+// export type CompanyRole = {
+//     id: string;
+//     name: string;
+//     slug: string;
+//     systemRole: string | null;
+// };
 
 export type MemberListResponse = {
     items: CompanyMember[];
@@ -62,4 +62,56 @@ export type ApiErrorResponse = {
     success?: false;
     message?: string;
     errors?: unknown;
+};
+
+
+
+export const PERMISSION_CODES = [
+    "USER_READ",
+    "USER_UPDATE",
+    "COMPANY_SETTINGS_READ",
+    "COMPANY_SETTINGS_UPDATE",
+    "MEMBER_READ",
+    "MEMBER_INVITE",
+    "MEMBER_UPDATE",
+    "MEMBER_REMOVE",
+    "ROLE_READ",
+    "ROLE_MANAGE",
+    "CASE_REQUEST_READ",
+    "CASE_REQUEST_REVIEW",
+    "CASE_CREATE",
+    "CASE_READ",
+    "CASE_UPDATE",
+    "CASE_ASSIGN",
+    "CASE_ESCALATE",
+    "CASE_RESOLVE",
+    "CASE_CLOSE",
+    "CASE_REOPEN",
+    "COMMENT_CREATE",
+    "EVIDENCE_READ",
+    "EVIDENCE_UPLOAD",
+    "EVIDENCE_DELETE",
+    "RESOLUTION_PROPOSE",
+    "RESOLUTION_DECIDE",
+    "SLA_MANAGE",
+    "AUDIT_READ",
+] as const;
+
+export type PermissionCode = (typeof PERMISSION_CODES)[number];
+
+export type SystemRoleType =
+    | "ADMIN"
+    | "AGENT"
+    | "INVESTIGATOR"
+    | "VIEWER";
+
+export type CompanyRole = {
+    id: string;
+    companyId: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    systemRole: SystemRoleType | null;
+    isDefault: boolean;
+    permissions: PermissionCode[];
 };
