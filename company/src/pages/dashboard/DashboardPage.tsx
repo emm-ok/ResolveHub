@@ -13,6 +13,8 @@ export default function DashboardPage() {
         isFetching,
     } = useCompanyDashboard();
 
+    console.log("Company", data?.company)
+
     if (isPending) {
         return <DashboardSkeleton />;
     }

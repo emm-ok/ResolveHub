@@ -22,6 +22,9 @@ import type {
     MembershipStatus,
     UpdateCompanyMemberInput,
 } from "../../types/company-member";
+import { useCompanyRoles } from "../../hooks/useCompanyRoles";
+import { useCompanyAccess } from "../../hooks/useCopanyAccess";
+import { useCompanyDashboard } from "../../hooks/useCompany";
 
 type Props = {
     companyId: string;
@@ -49,13 +52,7 @@ function getErrorMessage(error: unknown, fallback: string) {
     return fallback;
 }
 
-export default function TeamMembersPage({
-    companyId,
-    currentUserId,
-    canUpdateMembers,
-    canRemoveMembers,
-    roles,
-}: Props) {
+export default function TeamMembersPage() {
     const [searchInput, setSearchInput] = useState("");
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState<MembershipStatus | "">("");
@@ -71,6 +68,42 @@ export default function TeamMembersPage({
     const [actionError, setActionError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
 
+    const {data} = useCompanyDashboard() 
+    const companyId = data?.company.id;
+    const currentPermissions = data?.company.permissions
+
+    const rolesQuery = useCompanyRoles(companyId as string);
+
+    const {
+        hasPermission,
+    } = useCompanyAccess(currentPermissions);
+
+    if (rolesQuery.isPending) {
+        return <p className="p-6 text-sm text-neutral-500">Loading company roles…</p>;
+    }
+
+    if (rolesQuery.isError || !rolesQuery.data) {
+        return (
+            <div className="p-6" role="alert">
+                <p className="text-sm text-red-600">
+                    Unable to load company roles. Please try again.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => void rolesQuery.refetch()}
+                    className="mt-3 rounded-lg border px-3 py-2 text-sm"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    // const companyId
+    // const currentUserId,
+    // const canUpdateMembers,
+    // const canRemoveMembers,
+    // const roles,
     // Debounce search before querying the server.
     useEffect(() => {
         const timeout = setTimeout(() => {

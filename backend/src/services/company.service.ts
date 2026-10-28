@@ -289,6 +289,11 @@ export async function getMyCompanyDashboard({
                     description: true,
                     timezone: true,
                     status: true,
+                    roles: {
+                        select: {
+                            permissions: true
+                        }
+                    }
                 },
             },
         },

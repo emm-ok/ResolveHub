@@ -9,6 +9,9 @@ export interface DashboardCompany {
     description: string | null;
     timezone: string;
     status: string;
+    roles: {
+        permissions: any[]
+    }
 }
 
 export interface DashboardMember {
