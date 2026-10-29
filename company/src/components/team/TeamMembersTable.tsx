@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import type { CompanyMember } from "../../types/company-member";
-import MemberStatusBadge from "./MemberStatusBadge";
+import { MemberStatusBadge } from "./MemberStatusBadge";
 
 type Props = {
     members: CompanyMember[];

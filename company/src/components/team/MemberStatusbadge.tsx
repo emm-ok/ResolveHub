@@ -49,7 +49,7 @@ type Props = {
     animated?: boolean;
 };
 
-export default function MemberStatusBadge({
+export function MemberStatusBadge({
     status,
     showIcon = false,
     size = "md",
