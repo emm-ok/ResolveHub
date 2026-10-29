@@ -23,13 +23,6 @@ export type CompanyMember = {
     };
 };
 
-// export type CompanyRole = {
-//     id: string;
-//     name: string;
-//     slug: string;
-//     systemRole: string | null;
-// };
-
 export type MemberListResponse = {
     items: CompanyMember[];
     pagination: {
