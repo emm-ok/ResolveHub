@@ -18,22 +18,13 @@ import {
 import type {
     ApiErrorResponse,
     CompanyMember,
-    CompanyRole,
     MembershipStatus,
     UpdateCompanyMemberInput,
 } from "../../types/company-member";
 import { useCompanyRoles } from "../../hooks/useCompanyRoles";
 import { useCompanyAccess } from "../../hooks/useCopanyAccess";
 import { useCompanyDashboard } from "../../hooks/useCompany";
-
-type Props = {
-    companyId: string;
-    // Must be the internal database user ID, not the Clerk ID.
-    currentUserId?: string;
-    canUpdateMembers: boolean;
-    canRemoveMembers: boolean;
-    roles: CompanyRole[];
-};
+import { useCurrentUser } from "../../hooks/useUser";
 
 function getErrorMessage(error: unknown, fallback: string) {
     if (error instanceof AxiosError) {
@@ -68,21 +59,132 @@ export default function TeamMembersPage() {
     const [actionError, setActionError] = useState<string | null>(null);
     const [notice, setNotice] = useState<string | null>(null);
 
-    const {data} = useCompanyDashboard() 
-    const companyId = data?.company.id;
-    const currentPermissions = data?.company.permissions
+    const dashboardQuery = useCompanyDashboard();
+    const companyId = dashboardQuery.data?.company.id ?? "";
+    const currentUserQuery = useCurrentUser(Boolean(companyId));
+    const currentMembership = currentUserQuery.data?.memberships.find(
+        (membership) => membership.companyId === companyId,
+    );
+    const currentPermissions = currentMembership?.role.permissions.map(
+        ({ permission }) => permission.code,
+    );
+    const { hasPermission } = useCompanyAccess(currentPermissions);
+    const canReadMembers = hasPermission("MEMBER_READ");
+    const canReadRoles = hasPermission("ROLE_READ");
+    const canUpdateMembers =
+        hasPermission("MEMBER_UPDATE") && canReadRoles;
+    const canRemoveMembers = hasPermission("MEMBER_REMOVE");
+    const currentUserId = currentUserQuery.data?.id;
 
-    const rolesQuery = useCompanyRoles(companyId as string);
+    const rolesQuery = useCompanyRoles(
+        companyId,
+        canReadMembers && canReadRoles,
+    );
+    const roles = rolesQuery.data ?? [];
 
-    const {
-        hasPermission,
-    } = useCompanyAccess(currentPermissions);
+    // Debounce search before querying the server.
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setSearch(searchInput.trim());
+            setPage(1);
+        }, 300);
 
-    if (rolesQuery.isPending) {
+        return () => clearTimeout(timeout);
+    }, [searchInput]);
+
+    // Auto-dismiss transient success feedback.
+    useEffect(() => {
+        if (!notice) return;
+        const timeout = setTimeout(() => setNotice(null), 4000);
+        return () => clearTimeout(timeout);
+    }, [notice]);
+
+    // Permission checks are enforced by the API as well; disable the request
+    // until the current user's company membership permissions are available.
+    const isCurrentUserReady =
+        !currentUserQuery.isPending && Boolean(currentMembership);
+
+    const params = {
+        page,
+        limit,
+        ...(search ? { search } : {}),
+        ...(status ? { status } : {}),
+        ...(roleId ? { roleId } : {}),
+    };
+
+    const membersQuery = useCompanyMembers(
+        companyId,
+        params,
+        isCurrentUserReady && canReadMembers,
+    );
+    const updateMutation = useUpdateCompanyMember(companyId);
+    const removeMutation = useRemoveCompanyMember(companyId);
+
+    const members = membersQuery.data?.items ?? [];
+    const pagination = membersQuery.data?.pagination;
+
+    const isInitialLoading =
+        membersQuery.isPending && !membersQuery.data;
+    const isInitialError =
+        membersQuery.isError && !membersQuery.data;
+
+    if (dashboardQuery.isPending) {
+        return <p className="p-6 text-sm text-neutral-500">Loading company…</p>;
+    }
+
+    if (dashboardQuery.isError || !dashboardQuery.data) {
+        return (
+            <div className="p-6" role="alert">
+                <p className="text-sm text-red-600">
+                    Unable to load your company. Please try again.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => void dashboardQuery.refetch()}
+                    className="mt-3 rounded-lg border px-3 py-2 text-sm"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    if (currentUserQuery.isPending) {
+        return <p className="p-6 text-sm text-neutral-500">Loading your access…</p>;
+    }
+
+    if (currentUserQuery.isError || !currentMembership) {
+        return (
+            <div className="p-6" role="alert">
+                <p className="text-sm text-red-600">
+                    Unable to load your company access. Please try again.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => void currentUserQuery.refetch()}
+                    className="mt-3 rounded-lg border px-3 py-2 text-sm"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    if (!canReadMembers) {
+        return (
+            <div className="p-6" role="alert">
+                <p className="text-sm text-red-600">
+                    You don’t have permission to view company members.
+                </p>
+            </div>
+        );
+    }
+
+    if (canReadRoles && rolesQuery.isPending) {
         return <p className="p-6 text-sm text-neutral-500">Loading company roles…</p>;
     }
 
-    if (rolesQuery.isError || !rolesQuery.data) {
+    if (canReadRoles && (rolesQuery.isError || !rolesQuery.data)) {
         return (
             <div className="p-6" role="alert">
                 <p className="text-sm text-red-600">
@@ -98,53 +200,6 @@ export default function TeamMembersPage() {
             </div>
         );
     }
-
-    // const companyId
-    // const currentUserId,
-    // const canUpdateMembers,
-    // const canRemoveMembers,
-    // const roles,
-    // Debounce search before querying the server.
-    useEffect(() => {
-        const timeout = setTimeout(() => {
-            setSearch(searchInput.trim());
-            setPage(1);
-        }, 300);
-
-        return () => clearTimeout(timeout);
-    }, [searchInput]);
-
-    // Reset pagination when a filter changes.
-    useEffect(() => {
-        setPage(1);
-    }, [status, roleId]);
-
-    // Auto-dismiss transient success feedback.
-    useEffect(() => {
-        if (!notice) return;
-        const timeout = setTimeout(() => setNotice(null), 4000);
-        return () => clearTimeout(timeout);
-    }, [notice]);
-
-    const params = {
-        page,
-        limit,
-        ...(search ? { search } : {}),
-        ...(status ? { status } : {}),
-        ...(roleId ? { roleId } : {}),
-    };
-
-    const membersQuery = useCompanyMembers(companyId, params);
-    const updateMutation = useUpdateCompanyMember(companyId);
-    const removeMutation = useRemoveCompanyMember(companyId);
-
-    const members = membersQuery.data?.items ?? [];
-    const pagination = membersQuery.data?.pagination;
-
-    const isInitialLoading =
-        membersQuery.isPending && !membersQuery.data;
-    const isInitialError =
-        membersQuery.isError && !membersQuery.data;
 
     async function handleSave(input: UpdateCompanyMemberInput) {
         if (!editingMember || updateMutation.isPending) return;
@@ -239,7 +294,7 @@ export default function TeamMembersPage() {
                 </div>
             )}
 
-            <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5 dark:border-neutral-800 dark:bg-neutral-950">
+            <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5 dark:border-neutral-800">
                 <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 className="font-semibold">All members</h2>
@@ -259,9 +314,15 @@ export default function TeamMembersPage() {
                     search={searchInput}
                     onSearchChange={setSearchInput}
                     status={status}
-                    onStatusChange={setStatus}
+                    onStatusChange={(nextStatus) => {
+                        setStatus(nextStatus);
+                        setPage(1);
+                    }}
                     roleId={roleId}
-                    onRoleChange={setRoleId}
+                    onRoleChange={(nextRoleId) => {
+                        setRoleId(nextRoleId);
+                        setPage(1);
+                    }}
                     roles={roles}
                     onReset={resetFilters}
                 />

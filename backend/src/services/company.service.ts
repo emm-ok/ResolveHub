@@ -291,7 +291,15 @@ export async function getMyCompanyDashboard({
                     status: true,
                     roles: {
                         select: {
-                            permissions: true
+                            permissions: {
+                                select: {
+                                    permission: {
+                                        select: {
+                                            code: true
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 },

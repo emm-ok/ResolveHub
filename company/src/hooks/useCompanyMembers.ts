@@ -27,11 +27,12 @@ export const companyMemberKeys = {
 export function useCompanyMembers(
     companyId: string,
     params: MemberListParams,
+    enabled = true,
 ) {
     return useQuery({
         queryKey: companyMemberKeys.list(companyId, params),
         queryFn: () => getCompanyMembers(companyId, params),
-        enabled: Boolean(companyId),
+        enabled: Boolean(companyId) && enabled,
         placeholderData: (previousData) => previousData,
     });
 }

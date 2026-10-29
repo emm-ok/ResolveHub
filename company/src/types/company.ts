@@ -1,3 +1,5 @@
+import type { PermissionCode } from "./company-member";
+
 export interface DashboardCompany {
     id: string;
     name: string;
@@ -10,8 +12,12 @@ export interface DashboardCompany {
     timezone: string;
     status: string;
     roles: {
-        permissions: any[]
-    }
+        permissions: {
+            permission: {
+                code: PermissionCode;
+            };
+        }[]
+    }[];
 }
 
 export interface DashboardMember {

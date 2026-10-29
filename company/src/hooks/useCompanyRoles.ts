@@ -8,11 +8,11 @@ export const companyRoleKeys = {
         [...companyRoleKeys.all, companyId] as const,
 };
 
-export function useCompanyRoles(companyId: string) {
+export function useCompanyRoles(companyId: string, enabled = true) {
     return useQuery({
         queryKey: companyRoleKeys.byCompany(companyId),
         queryFn: () => getCompanyRoles(companyId),
-        enabled: Boolean(companyId),
+        enabled: Boolean(companyId) && enabled,
         staleTime: 60_000,
     });
 }

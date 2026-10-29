@@ -1,4 +1,6 @@
 
+import type { PermissionCode } from "./company-member";
+
 export interface CurrentUser {
     id: string;
     clerkId: string;
@@ -21,7 +23,7 @@ export interface CurrentUser {
             systemRole: string | null;
             permissions: {
                 permission: {
-                    code: string;
+                    code: PermissionCode;
                 };
             }[];
         };

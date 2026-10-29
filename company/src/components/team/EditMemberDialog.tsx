@@ -16,7 +16,7 @@ const schema = z.object({
     status: z.enum(["ACTIVE", "SUSPENDED"]),
     department: z.string().max(100).nullable(),
     jobTitle: z.string().max(100).nullable(),
-    employeeId: z.string().max(50).nullable(),
+    employeeId: z.string().max(100).nullable(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -64,9 +64,6 @@ export default function EditMemberDialog({
     if (!member) return null;
 
     const isSelf = member.user.id === currentUserId;
-    const isLastKnownAdmin = member.role.systemRole === "ADMIN" &&
-        roles.filter((role) => role.systemRole === "ADMIN").length === 0;
-
     // The backend remains the authority on whether an admin can be demoted
     // or suspended. This flag only prevents self-role changes in the UI.
     const selectedRoleId = form.watch("roleId");
