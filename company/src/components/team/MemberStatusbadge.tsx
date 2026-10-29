@@ -1,32 +1,123 @@
-
+import { motion } from "framer-motion";
+import {
+    CheckCircle2,
+    Clock3,
+    UserRoundX,
+} from "lucide-react";
 import type { MembershipStatus } from "../../types/company-member";
 
-const styles: Record<MembershipStatus, string> = {
-    ACTIVE:
-        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300",
-    SUSPENDED:
-        "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
-    REMOVED:
-        "border-neutral-200 bg-neutral-100 text-neutral-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300",
+const statusConfig: Record<
+    MembershipStatus,
+    {
+        label: string;
+        description: string;
+        icon: typeof CheckCircle2;
+        className: string;
+        dotClassName: string;
+    }
+> = {
+    ACTIVE: {
+        label: "Active",
+        description: "Membership is active",
+        icon: CheckCircle2,
+        className:
+            "border-emerald-200/90 bg-emerald-50 text-emerald-800",
+        dotClassName: "bg-emerald-500",
+    },
+    SUSPENDED: {
+        label: "Suspended",
+        description: "Membership is temporarily suspended",
+        icon: Clock3,
+        className:
+            "border-amber-200/90 bg-amber-50 text-amber-800",
+        dotClassName: "bg-amber-500",
+    },
+    REMOVED: {
+        label: "Removed",
+        description: "Membership has been removed",
+        icon: UserRoundX,
+        className:
+            "border-neutral-200 bg-neutral-100 text-neutral-600",
+        dotClassName: "bg-neutral-400",
+    },
 };
 
-const labels: Record<MembershipStatus, string> = {
-    ACTIVE: "Active",
-    SUSPENDED: "Suspended",
-    REMOVED: "Removed",
+type Props = {
+    status: MembershipStatus;
+    showIcon?: boolean;
+    size?: "sm" | "md";
+    animated?: boolean;
 };
 
 export default function MemberStatusBadge({
     status,
-}: {
-    status: MembershipStatus;
-}) {
+    showIcon = false,
+    size = "md",
+    animated = true,
+}: Props) {
+    const config = statusConfig[status];
+    const StatusIcon = config.icon;
+
+    const sizeClasses = {
+        sm: "gap-1.5 px-2 py-0.5 text-[10px]",
+        md: "gap-1.5 px-2.5 py-1 text-xs",
+    };
+
+    const badgeClassName = [
+        "inline-flex w-fit max-w-full shrink-0 items-center",
+        "rounded-full border font-semibold leading-4 tracking-[0.01em]",
+        "whitespace-nowrap transition-colors duration-200",
+        "focus-within:ring-2 focus-within:ring-violet-300",
+        sizeClasses[size],
+        config.className,
+    ].join(" ");
+
+    const content = (
+        <>
+            {showIcon ? (
+                <StatusIcon
+                    size={size === "sm" ? 11 : 13}
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                    className="shrink-0"
+                />
+            ) : (
+                <span className="relative flex h-1.5 w-1.5 shrink-0 items-center justify-center">
+                    {status === "ACTIVE" && (
+                        <span className="absolute h-full w-full animate-ping rounded-full bg-emerald-500/35" />
+                    )}
+                    <span
+                        className={`relative h-1.5 w-1.5 rounded-full ${config.dotClassName}`}
+                    />
+                </span>
+            )}
+
+            <span className="truncate">{config.label}</span>
+        </>
+    );
+
+    if (!animated) {
+        return (
+            <span
+                className={badgeClassName}
+                title={config.description}
+                aria-label={`Membership status: ${config.label}`}
+            >
+                {content}
+            </span>
+        );
+    }
+
     return (
-        <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${styles[status]}`}
+        <motion.span
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className={badgeClassName}
+            title={config.description}
+            aria-label={`Membership status: ${config.label}`}
         >
-            <span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-current" />
-            {labels[status]}
-        </span>
+            {content}
+        </motion.span>
     );
 }

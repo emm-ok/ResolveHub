@@ -1,7 +1,8 @@
 
 import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
-import { CheckCircle2, Users } from "lucide-react";
+import { AlertCircle, CheckCircle2, LoaderCircle, Users } from "lucide-react";
+import {motion, AnimatePresence} from "framer-motion";
 
 import TeamMemberFilters from "../../components/team/TeamMemberFilters";
 import TeamMembersTable from "../../components/team/TeamMembersTable";
@@ -25,6 +26,7 @@ import { useCompanyRoles } from "../../hooks/useCompanyRoles";
 import { useCompanyAccess } from "../../hooks/useCopanyAccess";
 import { useCompanyDashboard } from "../../hooks/useCompany";
 import { useCurrentUser } from "../../hooks/useUser";
+import { AccessDeniedState, CompanyAccessSkeleton, CompanyDashboardSkeleton, CompanyRolesSkeleton, LoadingState, MemberRowsSkeleton, RetryState, SkeletonBlock } from "./TeamMembersLoadingSkeletons";
 
 function getErrorMessage(error: unknown, fallback: string) {
     if (error instanceof AxiosError) {
@@ -128,78 +130,80 @@ export default function TeamMembersPage() {
     const isInitialError =
         membersQuery.isError && !membersQuery.data;
 
+    // ─────────────────────────────────────────────────────────────
+    // Initial loading and error states
+    // ─────────────────────────────────────────────────────────────
+
     if (dashboardQuery.isPending) {
-        return <p className="p-6 text-sm text-neutral-500">Loading company…</p>;
+        return <CompanyDashboardSkeleton />;
     }
 
     if (dashboardQuery.isError || !dashboardQuery.data) {
         return (
-            <div className="p-6" role="alert">
-                <p className="text-sm text-red-600">
-                    Unable to load your company. Please try again.
-                </p>
-                <button
-                    type="button"
-                    onClick={() => void dashboardQuery.refetch()}
-                    className="mt-3 rounded-lg border px-3 py-2 text-sm"
-                >
-                    Retry
-                </button>
-            </div>
+            <RetryState
+                title="Unable to load your company"
+                description="We couldn't retrieve your company information. Check your connection and try again."
+                onRetry={() => void dashboardQuery.refetch()}
+            />
         );
     }
 
     if (currentUserQuery.isPending) {
-        return <p className="p-6 text-sm text-neutral-500">Loading your access…</p>;
+        return <CompanyAccessSkeleton />;
     }
 
     if (currentUserQuery.isError || !currentMembership) {
         return (
-            <div className="p-6" role="alert">
-                <p className="text-sm text-red-600">
-                    Unable to load your company access. Please try again.
-                </p>
-                <button
-                    type="button"
-                    onClick={() => void currentUserQuery.refetch()}
-                    className="mt-3 rounded-lg border px-3 py-2 text-sm"
-                >
-                    Retry
-                </button>
-            </div>
+            <RetryState
+                title="Unable to load your company access"
+                description="Your membership details couldn't be retrieved. Please try again."
+                onRetry={() => void currentUserQuery.refetch()}
+            />
         );
     }
 
     if (!canReadMembers) {
-        return (
-            <div className="p-6" role="alert">
-                <p className="text-sm text-red-600">
-                    You don’t have permission to view company members.
-                </p>
-            </div>
-        );
+        return <AccessDeniedState />;
     }
 
     if (canReadRoles && rolesQuery.isPending) {
-        return <p className="p-6 text-sm text-neutral-500">Loading company roles…</p>;
+        return (
+            <LoadingState label="Loading company roles">
+                <div className="flex items-center gap-3">
+                    <SkeletonBlock className="h-12 w-12 shrink-0 rounded-2xl" />
+                    <div className="flex-1 space-y-2">
+                        <SkeletonBlock className="h-3 w-28" />
+                        <SkeletonBlock className="h-7 w-48 max-w-full" />
+                        <SkeletonBlock className="h-4 w-64 max-w-full" />
+                    </div>
+                </div>
+
+                <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5">
+                    <SkeletonBlock className="h-5 w-40" />
+                    <SkeletonBlock className="mt-2 h-4 w-64 max-w-full" />
+                    <div className="mt-6">
+                        <CompanyRolesSkeleton />
+                        <CompanyRolesSkeleton />
+                        <CompanyRolesSkeleton />
+                    </div>
+                </section>
+            </LoadingState>
+        );
     }
 
     if (canReadRoles && (rolesQuery.isError || !rolesQuery.data)) {
         return (
-            <div className="p-6" role="alert">
-                <p className="text-sm text-red-600">
-                    Unable to load company roles. Please try again.
-                </p>
-                <button
-                    type="button"
-                    onClick={() => void rolesQuery.refetch()}
-                    className="mt-3 rounded-lg border px-3 py-2 text-sm"
-                >
-                    Retry
-                </button>
-            </div>
+            <RetryState
+                title="Unable to load company roles"
+                description="Your team member list is available only after the required role information has loaded. Please retry."
+                onRetry={() => void rolesQuery.refetch()}
+            />
         );
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // Mutation handlers
+    // ─────────────────────────────────────────────────────────────
 
     async function handleSave(input: UpdateCompanyMemberInput) {
         if (!editingMember || updateMutation.isPending) return;
@@ -214,6 +218,7 @@ export default function TeamMembersPage() {
             });
 
             setEditingMember(null);
+            setActionError(null);
             setNotice("Team member updated successfully.");
         } catch (error) {
             setActionError(
@@ -229,12 +234,14 @@ export default function TeamMembersPage() {
         setNotice(null);
 
         try {
+            const removedMemberName =
+                removingMember.user.name || removingMember.user.email;
+
             await removeMutation.mutateAsync(removingMember.id);
 
             setRemovingMember(null);
-            setNotice(
-                `${removingMember.user.name || removingMember.user.email} was removed from the company.`,
-            );
+            setActionError(null);
+            setNotice(`${removedMemberName} was removed from the company.`);
 
             // If the last row on a page was removed, move back one page.
             if (members.length === 1 && page > 1) {
@@ -255,155 +262,297 @@ export default function TeamMembersPage() {
         setPage(1);
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Page
+    // ─────────────────────────────────────────────────────────────
+
     return (
         <main className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            {/* Page header */}
+            <motion.header
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
                 <div className="flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-neutral-800 shadow-sm">
                         <Users size={21} />
                     </div>
+
                     <div>
-                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-neutral-500">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700">
                             Company settings
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+
+                        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-neutral-950 sm:text-3xl">
                             Team members
                         </h1>
+
                         <p className="mt-2 max-w-xl text-sm leading-6 text-neutral-500">
-                            Manage your team's roles, membership status and company details.
+                            Manage your team&apos;s roles, membership status and
+                            company details.
                         </p>
                     </div>
                 </div>
-            </header>
 
-            {notice && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
-                >
-                    <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
-                    <span>{notice}</span>
-                    <button
-                        type="button"
-                        onClick={() => setNotice(null)}
-                        className="ml-auto text-xs font-medium underline underline-offset-2"
+                {pagination && (
+                    <div className="flex w-fit items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 shadow-sm">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+                            <Users size={16} />
+                        </div>
+
+                        <div>
+                            <p className="text-sm font-semibold tabular-nums text-neutral-900">
+                                {pagination.total}
+                            </p>
+                            <p className="text-[11px] text-neutral-500">
+                                {pagination.total === 1 ? "Member" : "Members"}
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </motion.header>
+
+            {/* Success notification */}
+            <AnimatePresence initial={false}>
+                {notice && (
+                    <motion.div
+                        key={notice}
+                        initial={{ opacity: 0, y: -8, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: "auto" }}
+                        exit={{ opacity: 0, y: -6, height: 0 }}
+                        transition={{ duration: 0.22 }}
+                        role="status"
+                        aria-live="polite"
+                        className="overflow-hidden"
                     >
-                        Dismiss
-                    </button>
-                </div>
-            )}
+                        <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-800">
+                            <CheckCircle2
+                                size={19}
+                                className="mt-0.5 shrink-0"
+                            />
 
-            <section className="rounded-2xl border border-neutral-200 bg-white p-4 sm:p-5 dark:border-neutral-800">
-                <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                            <span className="min-w-0 flex-1 leading-6">
+                                {notice}
+                            </span>
+
+                            <button
+                                type="button"
+                                onClick={() => setNotice(null)}
+                                aria-label="Dismiss notification"
+                                className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-emerald-800 underline decoration-emerald-300 underline-offset-4 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Action error notification */}
+            <AnimatePresence initial={false}>
+                {actionError && !editingMember && !removingMember && (
+                    <motion.div
+                        key={actionError}
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        role="alert"
+                        className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-800"
+                    >
+                        <AlertCircle
+                            size={18}
+                            className="mt-0.5 shrink-0"
+                        />
+
+                        <p className="min-w-0 flex-1 leading-6">
+                            {actionError}
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={() => setActionError(null)}
+                            aria-label="Dismiss error"
+                            className="rounded-lg px-2 py-1 text-xs font-semibold text-red-800 underline underline-offset-4 transition-colors hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        >
+                            Dismiss
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Members section */}
+            <motion.section
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.06, ease: "easeOut" }}
+                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm shadow-neutral-950/[0.025]"
+            >
+                {/* Section heading */}
+                <div className="flex flex-col gap-3 border-b border-neutral-100 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div>
-                        <h2 className="font-semibold">All members</h2>
-                        <p className="mt-1 text-sm text-neutral-500">
+                        <h2 className="text-base font-semibold tracking-tight text-neutral-950">
+                            All members
+                        </h2>
+
+                        <p className="mt-1 text-sm leading-5 text-neutral-500">
                             Search and filter company memberships.
                         </p>
                     </div>
+
                     {pagination && (
-                        <p className="text-sm text-neutral-500">
-                            {pagination.total}{" "}
-                            {pagination.total === 1 ? "member" : "members"}
-                        </p>
+                        <div className="flex w-fit items-center gap-2 rounded-lg bg-neutral-50 px-3 py-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+                            <p className="text-xs font-medium text-neutral-600">
+                                {pagination.total}{" "}
+                                {pagination.total === 1 ? "member" : "members"}
+                            </p>
+                        </div>
                     )}
                 </div>
 
-                <TeamMemberFilters
-                    search={searchInput}
-                    onSearchChange={setSearchInput}
-                    status={status}
-                    onStatusChange={(nextStatus) => {
-                        setStatus(nextStatus);
-                        setPage(1);
-                    }}
-                    roleId={roleId}
-                    onRoleChange={(nextRoleId) => {
-                        setRoleId(nextRoleId);
-                        setPage(1);
-                    }}
-                    roles={roles}
-                    onReset={resetFilters}
-                />
+                {/* Search and filters */}
+                <div className="p-4 sm:p-5">
+                    <TeamMemberFilters
+                        search={searchInput}
+                        onSearchChange={setSearchInput}
+                        status={status}
+                        onStatusChange={(nextStatus) => {
+                            setStatus(nextStatus);
+                            setPage(1);
+                        }}
+                        roleId={roleId}
+                        onRoleChange={(nextRoleId) => {
+                            setRoleId(nextRoleId);
+                            setPage(1);
+                        }}
+                        roles={roles}
+                        onReset={resetFilters}
+                    />
 
-                <div className="mt-5">
-                    {isInitialLoading ? (
-                        <TeamMembersStates state="loading" />
-                    ) : isInitialError ? (
-                        <TeamMembersStates
-                            state="error"
-                            message={getErrorMessage(
-                                membersQuery.error,
-                                "Please try again in a moment.",
-                            )}
-                            onRetry={() => membersQuery.refetch()}
-                        />
-                    ) : !membersQuery.data ? (
-                        <TeamMembersStates state="empty" />
-                    ) : (
-                        <>
-                            {membersQuery.isFetching && (
-                                <p
-                                    role="status"
-                                    className="mb-3 text-xs text-neutral-500"
-                                >
-                                    Updating results…
-                                </p>
-                            )}
-
-                            <TeamMembersTable
-                                members={members}
-                                currentUserId={currentUserId}
-                                canUpdate={canUpdateMembers}
-                                canRemove={canRemoveMembers}
-                                onEdit={(member) => {
-                                    setActionError(null);
-                                    setEditingMember(member);
-                                }}
-                                onRemove={(member) => {
-                                    setActionError(null);
-                                    setRemovingMember(member);
-                                }}
+                    {/* Results */}
+                    <div className="mt-5">
+                        {isInitialLoading ? (
+                            <MemberRowsSkeleton />
+                        ) : isInitialError ? (
+                            <TeamMembersStates
+                                state="error"
+                                message={getErrorMessage(
+                                    membersQuery.error,
+                                    "Please try again in a moment.",
+                                )}
+                                onRetry={() => void membersQuery.refetch()}
                             />
-
-                            {pagination && pagination.totalPages > 1 && (
-                                <nav
-                                    aria-label="Team members pagination"
-                                    className="mt-5 flex flex-col gap-3 border-t border-neutral-100 pt-4 sm:flex-row sm:items-center sm:justify-between dark:border-neutral-800"
-                                >
-                                    <p className="text-sm text-neutral-500">
-                                        Page {pagination.page} of {pagination.totalPages}
-                                        <span className="hidden sm:inline">
-                                            {" "}· {pagination.total} members total
-                                        </span>
-                                    </p>
-
-                                    <div className="flex gap-2">
-                                        <button
-                                            type="button"
-                                            disabled={!pagination.hasPreviousPage}
-                                            onClick={() => setPage((current) => Math.max(1, current - 1))}
-                                            className="h-10 flex-1 rounded-xl border border-neutral-200 px-4 text-sm font-medium hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none dark:border-neutral-800 dark:hover:bg-neutral-900"
+                        ) : !membersQuery.data ? (
+                            <TeamMembersStates state="empty" />
+                        ) : (
+                            <>
+                                {/* Background refresh indicator */}
+                                <AnimatePresence>
+                                    {membersQuery.isFetching && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{
+                                                opacity: 1,
+                                                height: "auto",
+                                            }}
+                                            exit={{ opacity: 0, height: 0 }}
+                                            className="mb-3 overflow-hidden"
                                         >
-                                            Previous
-                                        </button>
-                                        <button
-                                            type="button"
-                                            disabled={!pagination.hasNextPage}
-                                            onClick={() => setPage((current) => current + 1)}
-                                            className="h-10 flex-1 rounded-xl border border-neutral-200 px-4 text-sm font-medium hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none dark:border-neutral-800 dark:hover:bg-neutral-900"
-                                        >
-                                            Next
-                                        </button>
-                                    </div>
-                                </nav>
-                            )}
-                        </>
-                    )}
+                                            <div
+                                                role="status"
+                                                className="flex items-center gap-2 rounded-xl border border-violet-100 bg-violet-50/70 px-3 py-2 text-xs font-medium text-violet-700"
+                                            >
+                                                <LoaderCircle
+                                                    size={14}
+                                                    className="animate-spin"
+                                                />
+                                                Updating results…
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                <TeamMembersTable
+                                    members={members}
+                                    currentUserId={currentUserId}
+                                    canUpdate={canUpdateMembers}
+                                    canRemove={canRemoveMembers}
+                                    onEdit={(member) => {
+                                        setActionError(null);
+                                        setNotice(null);
+                                        setEditingMember(member);
+                                    }}
+                                    onRemove={(member) => {
+                                        setActionError(null);
+                                        setNotice(null);
+                                        setRemovingMember(member);
+                                    }}
+                                />
+
+                                {/* Pagination */}
+                                {pagination && pagination.totalPages > 1 && (
+                                    <nav
+                                        aria-label="Team members pagination"
+                                        className="mt-5 flex flex-col gap-3 border-t border-neutral-100 pt-4 sm:flex-row sm:items-center sm:justify-between"
+                                    >
+                                        <p className="text-sm text-neutral-500">
+                                            Page{" "}
+                                            <span className="font-semibold text-neutral-800">
+                                                {pagination.page}
+                                            </span>{" "}
+                                            of{" "}
+                                            <span className="font-semibold text-neutral-800">
+                                                {pagination.totalPages}
+                                            </span>
+
+                                            <span className="hidden sm:inline">
+                                                {" "}
+                                                · {pagination.total} members total
+                                            </span>
+                                        </p>
+
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                disabled={
+                                                    !pagination.hasPreviousPage ||
+                                                    membersQuery.isFetching
+                                                }
+                                                onClick={() =>
+                                                    setPage((current) =>
+                                                        Math.max(1, current - 1),
+                                                    )
+                                                }
+                                                className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-700 transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+                                            >
+                                                Previous
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                disabled={
+                                                    !pagination.hasNextPage ||
+                                                    membersQuery.isFetching
+                                                }
+                                                onClick={() =>
+                                                    setPage((current) => current + 1)
+                                                }
+                                                className="inline-flex h-10 flex-1 items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-700 transition-colors hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    </nav>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </div>
-            </section>
+            </motion.section>
 
+            {/* Edit member dialog */}
             <EditMemberDialog
                 member={editingMember}
                 roles={roles}
@@ -419,6 +568,7 @@ export default function TeamMembersPage() {
                 onSave={handleSave}
             />
 
+            {/* Remove member dialog */}
             <RemoveMemberDialog
                 member={removingMember}
                 isRemoving={removeMutation.isPending}
