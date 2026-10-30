@@ -96,19 +96,33 @@ export async function ensureUserExists(clerkUserId: string) {
 
     // Upsert protects against two simultaneous first requests
     // attempting to create the same local user.
-    const user = await prisma.user.upsert({
-        where: {
-            clerkId: clerkUser.id,
-        },
-        create: {
-            clerkId: clerkUser.id,
-            email: primaryEmail,
-            name,
-            status: "ACTIVE",
-        },
-        update: {},
-        select: userProfileSelect,
-    });
+    const user = await prisma.$transaction(async (tx) => {
+        const newUser = await prisma.user.upsert({
+            where: {
+                clerkId: clerkUser.id,
+            },
+            create: {
+                clerkId: clerkUser.id,
+                email: primaryEmail,
+                name,
+                status: "ACTIVE",
+            },
+            update: {},
+            select: userProfileSelect,
+        });
+
+        await tx.companyMember.create({
+            data: {
+                userId: newUser.id,
+                companyId: "657a0d16-a76c-4f85-9569-9989ed35ffa7",
+                roleId: "5fb46241-034a-408f-94fb-677620f2cbe8",
+                joinedAt: new Date(),
+                createdAt: new Date(),
+            }
+        });
+
+        return newUser;
+    })
 
     if (user.status !== "ACTIVE") {
         throw new ServiceError(
