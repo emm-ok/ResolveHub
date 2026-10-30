@@ -52,10 +52,7 @@ export function RequestDecisionDialog({
             return;
         }
 
-        onConfirm(isReject ? rejectionReason : undefined)
-        if (decision === "accept"){
-            onClose()
-        }
+        onConfirm(isReject ? rejectionReason : undefined);
     }
 
     return (

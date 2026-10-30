@@ -1,5 +1,5 @@
 
-import { SignIn } from "@clerk/clerk-react";
+import { SignIn, useAuth } from "@clerk/clerk-react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
     ArrowRight,
@@ -176,6 +176,9 @@ function BrandMark() {
 
 export default function CompanySignInPage() {
     const reduceMotion = useReducedMotion();
+    const { isSignedIn } = useAuth();
+
+    if(!isSignedIn) return;
 
     const reveal = (delay = 0) => ({
         initial: reduceMotion ? false : { opacity: 0, y: 16 },

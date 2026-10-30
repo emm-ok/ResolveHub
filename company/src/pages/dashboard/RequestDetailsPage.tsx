@@ -531,7 +531,7 @@ export default function RequestDetailsPage() {
                 onClose={() => {
                     if (!isActionPending) {
                         setDecision(null);
-                        setActionError(null);
+                        // setActionError(null);
                     }
                 }}
                 onConfirm={(reason) => void handleDecision(reason)}
