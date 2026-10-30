@@ -16,6 +16,7 @@ import {
 import { useCaseRequestDetails, caseRequestKeys, useAcceptCaseRequest, useRejectCaseRequest } from "../../hooks/useCaseRequests";
 import { RequestStatusBadge } from "./RequestStatusBadge";
 import { RequestDecisionDialog, type RequestDecision } from "./RequestDecisionDialog";
+import { toast } from "sonner";
 
 interface RequestDetailsModalProps {
     companyId: string;
@@ -126,6 +127,7 @@ export function RequestDetailsModal({
             onClose();
         } catch (error) {
             setActionError(getActionErrorMessage(error));
+            toast.error(getActionErrorMessage(error))
         }
     }
 

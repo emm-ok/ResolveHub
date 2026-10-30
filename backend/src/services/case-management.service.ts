@@ -983,7 +983,7 @@ export async function getCaseKpis({
     await requireCompanyPermission({
         clerkUserId,
         companyId,
-        permission: PermissionCode.CASE_REQUEST_REVIEW,
+        permission: PermissionCode.CASE_READ,
     });
 
     const now = new Date();
