@@ -664,7 +664,7 @@ export async function getCaseRequests({
     await requireCompanyPermission({
         clerkUserId,
         companyId,
-        permission: PermissionCode.CASE_REQUEST_REVIEW,
+        permission: PermissionCode.CASE_REQUEST_READ,
     });
 
     const where: Prisma.CaseRequestWhereInput = {
@@ -722,7 +722,7 @@ export async function getCaseRequest({
     await requireCompanyPermission({
         clerkUserId,
         companyId,
-        permission: PermissionCode.CASE_REQUEST_REVIEW,
+        permission: PermissionCode.CASE_REQUEST_READ,
     });
 
     let request

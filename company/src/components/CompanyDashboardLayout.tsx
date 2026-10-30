@@ -50,6 +50,7 @@ export default function CompanyDashboardLayout() {
     const {data: currentUser} = useCurrentUser();
     const reduceMotion = useReducedMotion();
 
+    console.log("Current User", currentUser)
     const page = pageTitles[location.pathname] ?? {
         title: "Workspace",
         description: "Manage your company's customer support activity.",
