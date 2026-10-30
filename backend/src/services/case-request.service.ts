@@ -815,7 +815,7 @@ export async function getCases({
     await requireCompanyPermission({
         clerkUserId,
         companyId,
-        permission: PermissionCode.CASE_REQUEST_REVIEW,
+        permission: PermissionCode.CASE_READ,
     });
 
     const where: Prisma.CaseWhereInput = {
@@ -872,7 +872,7 @@ export async function getCaseDetails({
     await requireCompanyPermission({
         clerkUserId,
         companyId,
-        permission: PermissionCode.CASE_REQUEST_REVIEW,
+        permission: PermissionCode.CASE_READ,
     });
 
     const caseRecord = await prisma.case.findFirst({
