@@ -436,7 +436,7 @@ export default function RequestDetailsPage() {
                                     {actionError && (
                                         <div
                                             role="alert"
-                                            className="mt-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm leading-6 text-neutral-800"
+                                            className="mt-4 rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-3 text-sm leading-6 text-red-500"
                                         >
                                             {actionError}
                                         </div>
