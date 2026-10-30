@@ -178,7 +178,7 @@ export default function CompanySignUpPage() {
     const reduceMotion = useReducedMotion();
     const { isSignedIn } = useAuth();
 
-    if (!isSignedIn) return;
+    if (isSignedIn) return;
 
     const reveal = (delay = 0) => ({
         initial: reduceMotion ? false : { opacity: 0, y: 16 },
