@@ -46,25 +46,37 @@ export async function handleUserCreated(event: WebhookEvent) {
 
   const name = user.username?.toUpperCase() ?? email.split("@")[0]?.toUpperCase() ?? `${firstName} ${lastName}`.trim()
 
-  await prisma.user.upsert({
-    where: {
-      clerkId: user.id,
-    },
+  await prisma.$transaction(async(tx) => {
+    const newUser = await tx.user.upsert({
+      where: {
+        clerkId: user.id,
+      },
 
-    create: {
-      clerkId: user.id,
-      email,
-      name,
-      status: "ACTIVE",
-    },
+      create: {
+        clerkId: user.id,
+        email,
+        name,
+        status: "ACTIVE",
+      },
 
-    update: {
-      email,
-      name,
-      status: "ACTIVE",
-      deletedAt: null,
-    },
-  });
+      update: {
+        email,
+        name,
+        status: "ACTIVE",
+        deletedAt: null,
+      },
+    });
+
+    await tx.companyMember.create({
+      data: {
+        userId: newUser.id,
+        companyId: "657a0d16-a76c-4f85-9569-9989ed35ffa7",
+        roleId: "5fb46241-034a-408f-94fb-677620f2cbe8",
+        joinedAt: new Date(),
+        createdAt: new Date(),
+      }
+    });
+  })
 }
 
 export async function handleUserUpdated(event: WebhookEvent) {
