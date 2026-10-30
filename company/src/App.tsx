@@ -12,7 +12,7 @@ import CasesPage from "./pages/dashboard/CasesPage";
 import CaseDetailsPage from "./pages/dashboard/CaseDetailsPage";
 import RequestDetailsPage from "./pages/dashboard/RequestDetailsPage";
 import TeamMembersPage from "./pages/dashboard/TeamMembersPage";
-
+import { Toaster } from "sonner"
 // function DashboardGate() {
 //   const { isLoaded, isSignedIn } = useAuth();
 
@@ -118,10 +118,13 @@ export default function App() {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} appearance={clerkAppearance}>
-      <Providers>
-        <AppRoutes />
-      </Providers>
-    </ClerkProvider>
+    <>
+      <Toaster position="top-right" />
+      <ClerkProvider publishableKey={publishableKey} appearance={clerkAppearance}>
+        <Providers>
+          <AppRoutes />
+        </Providers>
+      </ClerkProvider>
+    </>
   );
 }

@@ -27,6 +27,7 @@ import {
     type RequestDecision,
 } from "../../components/requests/RequestDecisionDialog";
 import { RequestStatusBadge } from "../../components/requests/RequestStatusBadge";
+import { toast } from "sonner";
 
 function formatDate(value: string | null | undefined) {
     if (!value) return "Not available";
@@ -198,6 +199,7 @@ export default function RequestDetailsPage() {
             ]);
         } catch (error) {
             setActionError(getErrorMessage(error));
+            toast.error(getErrorMessage(error))
         }
     }
 
